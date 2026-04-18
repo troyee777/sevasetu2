@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SevaSetu NGO Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "on-tertiary-fixed": "#410006",
+          "surface-container-low": "#eff4ff",
+          "outline": "#6e7a71",
+          "on-background": "#121c2a",
+          "on-tertiary-container": "#6d0714",
+          "secondary-container": "#fea619",
+          "on-error": "#ffffff",
+          "secondary-fixed": "#ffddb8",
+          "primary": "#006c44",
+          "error-container": "#ffdad6",
+          "on-tertiary-fixed-variant": "#881d24",
+          "surface-container": "#e6eeff",
+          "surface-container-high": "#dee9fc",
+          "primary-container": "#4caf7d",
+          "secondary-fixed-dim": "#ffb95f",
+          "tertiary-container": "#fa7272",
+          "on-secondary": "#ffffff",
+          "on-surface-variant": "#3e4942",
+          "primary-fixed-dim": "#77daa4",
+          "surface-dim": "#d0dbed",
+          "outline-variant": "#bdcabf",
+          "surface": "#f8f9ff",
+          "on-primary": "#ffffff",
+          "on-primary-fixed": "#002112",
+          "surface-tint": "#006c44",
+          "surface-container-highest": "#d9e3f6",
+          "on-primary-fixed-variant": "#005232",
+          "on-secondary-container": "#684000",
+          "inverse-on-surface": "#eaf1ff",
+          "on-tertiary": "#ffffff",
+          "on-error-container": "#93000a",
+          "surface-variant": "#d9e3f6",
+          "surface-bright": "#f8f9ff",
+          "on-secondary-fixed-variant": "#653e00",
+          "on-surface": "#121c2a",
+          "inverse-surface": "#27313f",
+          "tertiary-fixed": "#ffdad8",
+          "inverse-primary": "#77daa4",
+          "surface-container-lowest": "#ffffff",
+          "tertiary-fixed-dim": "#ffb3b0",
+          "background": "#f8f9ff",
+          "on-secondary-fixed": "#2a1700",
+          "tertiary": "#a83639",
+          "on-primary-container": "#003d25",
+          "error": "#ba1a1a",
+          "primary-fixed": "#93f7bf",
+          "secondary": "#855300"
+        },
+        fontFamily: {
+          "headline": ["Plus Jakarta Sans"],
+          "body": ["Plus Jakarta Sans"],
+          "label": ["Plus Jakarta Sans"]
+        },
+        borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+      },
+    },
+  }
+</script>
+<style>
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+  /* Dropdown menu */
+  #nav-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(0,108,68,0.12);
+    z-index: 200;
+    padding: 8px;
+    animation: dropIn 0.18s ease;
+  }
+  #nav-dropdown.open { display: block; }
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  #nav-dropdown a {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 0.75rem;
+    font-size: 0.875rem; font-weight: 500;
+    color: #3e4942; text-decoration: none;
+    transition: background 0.15s;
+  }
+  #nav-dropdown a:hover { background: #eff4ff; }
+  #nav-dropdown a.active { background: #d1fae5; color: #004d30; font-weight: 700; }
+  #nav-dropdown hr { border-color: #e6eeff; margin: 6px 0; }
+
+  /* Upload Modal */
+  #post-modal {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(18,28,42,0.45); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  #post-modal.open { display: flex; animation: fadeIn 0.2s ease; }
+
+  /* Manual Modal */
+  #manual-modal {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(18,28,42,0.45); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  #manual-modal.open { display: flex; animation: fadeIn 0.2s ease; }
+
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  #modal-box, #manual-box { animation: slideUp 0.22s cubic-bezier(.4,0,.2,1); }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(24px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  #drop-zone.drag-over { border-color: #006c44; background: #f0faf5; }
+
+  /* Background */
+  body { background: #f4f7f4; }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: -1;
+    background-image: radial-gradient(circle, rgba(0,108,68,0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  /* Page entrance */
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .fade-up { animation: fadeUp 0.5s ease both; }
+  .fade-up-1 { animation-delay: 0.05s; }
+  .fade-up-2 { animation-delay: 0.13s; }
+  .fade-up-3 { animation-delay: 0.21s; }
+  .fade-up-4 { animation-delay: 0.29s; }
+  .fade-up-5 { animation-delay: 0.37s; }
+
+  /* Stat card shimmer */
+  .stat-card { position:relative; overflow:hidden; transition:transform 0.3s ease,box-shadow 0.3s ease; }
+  .stat-card:hover { transform:translateY(-5px); box-shadow:0 24px 48px rgba(0,108,68,0.10); }
+  .stat-card::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,0) 40%,rgba(255,255,255,0.35) 50%,rgba(255,255,255,0) 60%);
+    background-size:200% 200%; background-position:200% 200%;
+    transition:background-position 0.5s ease; pointer-events:none;
+  }
+  .stat-card:hover::after { background-position:-50% -50%; }
+
+  /* Timeline */
+  .timeline-dot-first { box-shadow:0 0 0 5px rgba(76,175,125,0.18); }
+
+  /* Manual form styling */
+  .form-field { display:flex; flex-direction:column; gap:6px; }
+  .form-label { font-size:0.78rem; font-weight:700; color:#3e4942; text-transform:uppercase; letter-spacing:0.05em; }
+  .form-input {
+    width:100%; padding:10px 14px; border-radius:0.75rem;
+    border:1.5px solid #bdcabf; background:#fff;
+    font-size:0.875rem; color:#121c2a; font-family:'Plus Jakarta Sans',sans-serif;
+    transition:border-color 0.2s, box-shadow 0.2s; outline:none;
+  }
+  .form-input:focus { border-color:#006c44; box-shadow:0 0 0 3px rgba(0,108,68,0.1); }
+  .form-select {
+    width:100%; padding:10px 14px; border-radius:0.75rem;
+    border:1.5px solid #bdcabf; background:#fff;
+    font-size:0.875rem; color:#121c2a; font-family:'Plus Jakarta Sans',sans-serif;
+    transition:border-color 0.2s; outline:none; cursor:pointer; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%236e7a71' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 12px center;
+  }
+  .form-select:focus { border-color:#006c44; box-shadow:0 0 0 3px rgba(0,108,68,0.1); }
+  .urgency-radio { display:flex; gap:8px; }
+  .urgency-radio label {
+    flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+    padding:8px 12px; border-radius:0.75rem; border:1.5px solid #bdcabf;
+    font-size:0.78rem; font-weight:700; cursor:pointer; transition:all 0.2s;
+    text-transform:uppercase; letter-spacing:0.05em;
+  }
+  .urgency-radio input[type="radio"] { display:none; }
+  .urgency-radio input[type="radio"]:checked + label.high { border-color:#a83639; background:#fff0f0; color:#a83639; }
+  .urgency-radio input[type="radio"]:checked + label.mid  { border-color:#855300; background:#fff8ed; color:#855300; }
+  .urgency-radio input[type="radio"]:checked + label.low  { border-color:#006c44; background:#f0faf5; color:#006c44; }
+  .urgency-radio label:hover { border-color:#006c44; }
+</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen">
+
+<!-- ══════════════ UPLOAD MODAL ══════════════ -->
+<div id="post-modal" onclick="closeModalOutside(event)">
+  <div id="modal-box" class="bg-white rounded-2xl shadow-2xl shadow-emerald-900/10 w-full max-w-lg mx-4 p-8 relative">
+    <button onclick="closeModal()" class="absolute top-5 right-5 p-1.5 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+    <div class="flex items-center gap-4 mb-8">
+      <div class="p-3 bg-primary/10 text-primary rounded-full">
+        <span class="material-symbols-outlined">auto_awesome</span>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-on-surface">Upload Field Report</h3>
+        <p class="text-on-surface-variant text-sm mt-0.5">AI will extract needs automatically from your documents</p>
+      </div>
+    </div>
+    <div id="drop-zone"
+      class="border-2 border-dashed border-outline-variant/50 rounded-lg p-12 flex flex-col items-center justify-center bg-surface-container-low/30 hover:bg-surface-container-low transition-colors cursor-pointer group"
+      onclick="document.getElementById('file-input').click()"
+      ondragover="handleDragOver(event)"
+      ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)">
+      <span class="material-symbols-outlined text-5xl text-outline-variant group-hover:text-primary mb-4 transition-colors">cloud_upload</span>
+      <p class="text-on-surface-variant font-medium">Drag and drop field reports or <span class="text-primary underline">browse</span></p>
+      <p class="text-xs text-outline mt-2">Supports PDF, DOCX, and JPG (max 20MB)</p>
+      <input id="file-input" type="file" accept=".pdf,.docx,.jpg,.jpeg" class="hidden" onchange="handleFileSelect(event)"/>
+    </div>
+    <div id="file-preview" class="hidden mt-4 items-center gap-3 bg-surface-container-low rounded-xl px-4 py-3">
+      <span class="material-symbols-outlined text-primary">description</span>
+      <div class="flex-1 min-w-0">
+        <p id="file-name" class="text-sm font-bold text-on-surface truncate"></p>
+        <p id="file-size" class="text-xs text-on-surface-variant"></p>
+      </div>
+      <button onclick="clearFile(event)" class="text-outline hover:text-tertiary transition-colors">
+        <span class="material-symbols-outlined text-sm">cancel</span>
+      </button>
+    </div>
+    <div class="flex gap-3 mt-8">
+      <button onclick="closeModal()" class="flex-1 py-3 bg-surface-container-highest text-on-surface rounded-full font-bold text-sm hover:bg-surface-container-high transition-colors">Cancel</button>
+      <button id="submit-btn" onclick="handleSubmit()" disabled class="flex-1 py-3 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-full font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 transition-transform disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MANUAL REPORT MODAL ══════════════ -->
+<div id="manual-modal" onclick="closeManualOutside(event)">
+  <div id="manual-box" class="bg-white rounded-2xl shadow-2xl shadow-emerald-900/10 w-full max-w-lg mx-4 p-8 relative max-h-[90vh] overflow-y-auto">
+    <button onclick="closeManual()" class="absolute top-5 right-5 p-1.5 rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+      <div class="p-3 bg-secondary/10 text-secondary rounded-full">
+        <span class="material-symbols-outlined">edit_note</span>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-on-surface">Manual Report</h3>
+        <p class="text-on-surface-variant text-sm mt-0.5">Fill in the details of the community need yourself</p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="flex flex-col gap-5">
+
+      <!-- Need Title -->
+      <div class="form-field">
+        <span class="form-label">Need Title</span>
+        <input type="text" id="manualTitle" class="form-input" placeholder="e.g. Emergency Water Supply for Zone 4" />
+      </div>
+
+      <!-- Category -->
+      <div class="form-field">
+        <span class="form-label">Category</span>
+        <select id="manualCategory" class="form-select">
+          <option value="" disabled selected>Select a category</option>
+          <option>Healthcare</option>
+          <option>Education</option>
+          <option>Logistics</option>
+          <option>Food & Nutrition</option>
+          <option>Shelter</option>
+          <option>Mental Health</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <!-- Urgency -->
+      <div class="form-field">
+        <span class="form-label">Urgency Level</span>
+        <div class="urgency-radio">
+          <input type="radio" name="urgency" id="u-high" value="high"/>
+          <label for="u-high" class="high">
+            <span class="material-symbols-outlined" style="font-size:15px;font-variation-settings:'FILL' 1">priority_high</span>
+            High
+          </label>
+          <input type="radio" name="urgency" id="u-mid" value="mid"/>
+          <label for="u-mid" class="mid">
+            <span class="material-symbols-outlined" style="font-size:15px;font-variation-settings:'FILL' 1">drag_handle</span>
+            Mid
+          </label>
+          <input type="radio" name="urgency" id="u-low" value="low"/>
+          <label for="u-low" class="low">
+            <span class="material-symbols-outlined" style="font-size:15px;font-variation-settings:'FILL' 1">arrow_downward</span>
+            Low
+          </label>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="form-field">
+        <span class="form-label">Location / Area</span>
+        <input type="text" id="manualLocation" class="form-input" placeholder="e.g. Ward 7, Dharavi, Mumbai" />
+      </div>
+
+      <!-- Description -->
+      <div class="form-field">
+        <span class="form-label">Description</span>
+        <textarea id="manualDescription" class="form-input" rows="3" placeholder="Describe the need in detail — who needs it, how many people, any deadlines..." style="resize:vertical;"></textarea>
+      </div>
+
+      <!-- Estimated People -->
+      <div class="form-field">
+        <span class="form-label">Estimated People Affected</span>
+        <input type="number" id="manualAffected" class="form-input" placeholder="e.g. 120" min="1" />
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 mt-8">
+      <button onclick="closeManual()" class="flex-1 py-3 bg-surface-container-highest text-on-surface rounded-full font-bold text-sm hover:bg-surface-container-high transition-colors">Cancel</button>
+      <button onclick="handleManualSubmit()" id="manualSubmitBtn" class="flex-1 py-3 bg-gradient-to-r from-secondary to-secondary-container text-on-secondary rounded-full font-bold text-sm shadow-lg shadow-secondary/20 hover:scale-105 transition-transform">
+        Submit Need
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="min-h-screen">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md shadow-[0_20px_40px_rgba(0,108,68,0.06)]">
+    <div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shadow shadow-primary/25">
+          <span class="material-symbols-outlined text-white" style="font-size:16px;font-variation-settings:'FILL' 1">volunteer_activism</span>
+        </div>
+        <span class="text-xl font-extrabold text-emerald-900 tracking-tighter">SevaSetu</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="p-2 text-on-surface-variant hover:bg-emerald-50 rounded-full transition-all">
+          <span class="material-symbols-outlined">notifications</span>
+        </button>
+        <div class="h-10 w-10 rounded-full overflow-hidden border-2 border-primary-container/30">
+          <img alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-bUWJTFdIVgMPbzcUZnNDAhc-jChFJZfJeAnzJ04JEVYfzfK26ZoHyeR7XupROBf4CQF4-XtFUnVaV2YyWhtDnEaPYFp4mwqamOLpfcfXtP6IMxlD3laoKqxpJbbPvrSJWIV7alfvNZYtEkjlkRd4tAgSNpEshq12f3j9RFmXdOrTp5ni21eZllfc4XofT_WFc4JMkkv1LvfrQ8cfQANRqBCZCVIjJa5r25UMTfvL3nQr_7T2vmCe95cpUCuJTixW-mYdt3hKeZJz"/>
+        </div>
+        <div class="relative" id="nav-wrapper">
+          <button onclick="toggleMenu()" class="p-2 text-on-surface-variant hover:bg-emerald-50 rounded-full transition-all" aria-label="Open navigation menu">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <div id="nav-dropdown">
+            <a href="#" class="active"><span class="material-symbols-outlined" style="font-size:20px">home</span>Home</a>
+            <a href="#"><span class="material-symbols-outlined" style="font-size:20px">explore</span>Discover</a>
+            <a href="#"><span class="material-symbols-outlined" style="font-size:20px;font-variation-settings:'FILL' 1">dashboard</span>Dashboard</a>
+            <a href="#"><span class="material-symbols-outlined" style="font-size:20px">volunteer_activism</span>Requests</a>
+            <hr/>
+            <a href="#"><span class="material-symbols-outlined" style="font-size:20px">settings</span>Settings</a>
+            <a href="#"><span class="material-symbols-outlined" style="font-size:20px">logout</span>Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto p-6 lg:p-10 space-y-10">
+
+    <!-- Welcome -->
+    <section class="fade-up fade-up-1">
+      <p class="text-xs font-bold uppercase tracking-widest text-primary mb-1">Dashboard</p>
+      <h2 id="welcomeHeading" class="text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface">Good morning, GreenRoots Foundation 👋</h2>
+      <p class="text-on-surface-variant mt-2 text-lg">Here's what needs your attention today</p>
+    </section>
+
+    <!-- Stats -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 fade-up fade-up-2">
+      <div class="stat-card bg-white p-6 rounded-xl border border-primary/5">
+        <div class="flex justify-between items-start mb-5">
+          <div class="p-3 bg-primary/10 rounded-2xl text-primary"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">pending_actions</span></div>
+          <span class="text-xs font-bold tracking-widest text-primary uppercase bg-primary/8 px-2 py-1 rounded-full">Active</span>
+        </div>
+        <div class="text-4xl font-extrabold text-on-surface mb-1" id="statOpenNeeds">24</div>
+        <div class="text-on-surface-variant text-sm font-medium">Open Needs</div>
+        <div class="mt-3 h-1 rounded-full bg-primary/10"><div id="progressOpen" class="h-1 rounded-full bg-primary w-3/5"></div></div>
+      </div>
+      <div class="stat-card bg-white p-6 rounded-xl border border-secondary/5">
+        <div class="flex justify-between items-start mb-5">
+          <div class="p-3 bg-secondary/10 rounded-2xl text-secondary"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">assignment_ind</span></div>
+          <span class="text-xs font-bold tracking-widest text-secondary uppercase bg-secondary/8 px-2 py-1 rounded-full">Processing</span>
+        </div>
+        <div class="text-4xl font-extrabold text-on-surface mb-1" id="statAssignedNeeds">12</div>
+        <div class="text-on-surface-variant text-sm font-medium">Assigned Needs</div>
+        <div class="mt-3 h-1 rounded-full bg-secondary/10"><div id="progressAssigned" class="h-1 rounded-full bg-secondary w-2/5"></div></div>
+      </div>
+      <div class="stat-card bg-white p-6 rounded-xl border border-primary-container/10">
+        <div class="flex justify-between items-start mb-5">
+          <div class="p-3 bg-primary-container/15 rounded-2xl text-primary-container"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">verified</span></div>
+          <span class="text-xs font-bold tracking-widest text-primary-container uppercase bg-primary-container/10 px-2 py-1 rounded-full">Monthly</span>
+        </div>
+        <div class="text-4xl font-extrabold text-on-surface mb-1" id="statCompleted">148</div>
+        <div class="text-on-surface-variant text-sm font-medium">Completed This Month</div>
+        <div class="mt-3 h-1 rounded-full bg-primary-container/15"><div id="progressDone" class="h-1 rounded-full bg-primary-container w-4/5"></div></div>
+      </div>
+      <div class="stat-card bg-white p-6 rounded-xl border border-tertiary/5">
+        <div class="flex justify-between items-start mb-5">
+          <div class="p-3 bg-tertiary/10 rounded-2xl text-tertiary"><span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">groups</span></div>
+          <span class="text-xs font-bold tracking-widest text-tertiary uppercase bg-tertiary/8 px-2 py-1 rounded-full">Community</span>
+        </div>
+        <div class="text-4xl font-extrabold text-on-surface mb-1" id="statVolunteers">86</div>
+        <div class="text-on-surface-variant text-sm font-medium">Active Volunteers</div>
+        <div class="mt-3 h-1 rounded-full bg-tertiary/10"><div id="progressVols" class="h-1 rounded-full bg-tertiary w-1/2"></div></div>
+      </div>
+    </section>
+
+    <!-- Dashboard Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 fade-up fade-up-3">
+
+      <!-- LEFT -->
+      <div class="lg:col-span-7 space-y-8">
+
+        <!-- Recent Needs -->
+        <div class="bg-surface-container-lowest rounded-lg overflow-hidden shadow-[0_20px_40px_rgba(0,108,68,0.04)]">
+          <div class="p-8 pb-4 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-on-surface">Recent Needs</h3>
+            <a href="/ngo/needs" class="text-primary font-bold text-sm hover:underline">View All</a>
+          </div>
+          <div id="recentNeedsContainer" class="divide-y divide-surface-container">
+            <div class="p-8 flex items-center justify-between group hover:bg-surface-container-low transition-colors">
+              <div class="flex items-center gap-6">
+                <div class="w-2 h-12 bg-tertiary rounded-full"></div>
+                <div>
+                  <div class="flex items-center gap-3 mb-1">
+                    <span class="text-lg font-bold text-on-surface">Emergency Water Supply</span>
+                    <span class="px-3 py-1 bg-tertiary-fixed text-on-tertiary-fixed text-[10px] font-black uppercase tracking-widest rounded-full">High Urgency</span>
+                  </div>
+                  <div class="flex gap-4 text-sm text-on-surface-variant">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">category</span> Logistics</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">schedule</span> 2h ago</span>
+                  </div>
+                </div>
+              </div>
+              <button class="px-6 py-2 bg-surface-container-highest text-on-surface font-bold rounded-full text-sm group-hover:bg-primary group-hover:text-white transition-all">View</button>
+            </div>
+            <div class="p-8 flex items-center justify-between group hover:bg-surface-container-low transition-colors">
+              <div class="flex items-center gap-6">
+                <div class="w-2 h-12 bg-secondary rounded-full"></div>
+                <div>
+                  <div class="flex items-center gap-3 mb-1">
+                    <span class="text-lg font-bold text-on-surface">Education Materials for Primary School</span>
+                    <span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed text-[10px] font-black uppercase tracking-widest rounded-full">Mid Urgency</span>
+                  </div>
+                  <div class="flex gap-4 text-sm text-on-surface-variant">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">category</span> Education</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">schedule</span> 5h ago</span>
+                  </div>
+                </div>
+              </div>
+              <button class="px-6 py-2 bg-surface-container-highest text-on-surface font-bold rounded-full text-sm group-hover:bg-primary group-hover:text-white transition-all">View</button>
+            </div>
+            <div class="p-8 flex items-center justify-between group hover:bg-surface-container-low transition-colors">
+              <div class="flex items-center gap-6">
+                <div class="w-2 h-12 bg-primary rounded-full"></div>
+                <div>
+                  <div class="flex items-center gap-3 mb-1">
+                    <span class="text-lg font-bold text-on-surface">Post-Operative Medicine Kit</span>
+                    <span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed text-[10px] font-black uppercase tracking-widest rounded-full">Low Urgency</span>
+                  </div>
+                  <div class="flex gap-4 text-sm text-on-surface-variant">
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">category</span> Healthcare</span>
+                    <span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">schedule</span> 1d ago</span>
+                  </div>
+                </div>
+              </div>
+              <button class="px-6 py-2 bg-surface-container-highest text-on-surface font-bold rounded-full text-sm group-hover:bg-primary group-hover:text-white transition-all">View</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── POST A NEED CTA ── -->
+        <div class="group relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary-container rounded-lg shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 hover:scale-[1.01] transition-all duration-300">
+          <!-- Decorative circles -->
+          <div class="absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white/5"></div>
+          <div class="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/5"></div>
+          <div class="absolute top-4 right-16 w-16 h-16 rounded-full bg-white/5"></div>
+
+          <div class="relative p-10 flex flex-col items-start gap-6">
+            <!-- Top row: icon + AI badge -->
+            <div class="flex items-center justify-between w-full">
+              <div class="p-4 bg-white/15 rounded-2xl">
+                <span class="material-symbols-outlined text-white text-3xl" style="font-variation-settings:'FILL' 1">volunteer_activism</span>
+              </div>
+              <span class="flex items-center gap-1.5 bg-white/15 text-white/90 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+                <span class="material-symbols-outlined text-white" style="font-size:14px;font-variation-settings:'FILL' 1">auto_awesome</span>
+                AI Powered
+              </span>
+            </div>
+
+            <!-- Text -->
+            <div>
+              <h3 class="text-2xl font-extrabold text-white tracking-tight">Post a Need</h3>
+              <p class="text-white/70 mt-1.5 text-sm leading-relaxed">Upload a field report and let AI automatically extract and categorise community needs — or fill in the details yourself.</p>
+            </div>
+
+            <!-- ── TWO BUTTONS ── -->
+            <div class="flex flex-wrap gap-3 w-full">
+              <!-- Upload Report (primary) -->
+              <button
+                onclick="openModal()"
+                class="flex items-center gap-2 bg-white text-primary font-bold text-sm px-6 py-3 rounded-full shadow-lg hover:gap-3 transition-all duration-200">
+                <span class="material-symbols-outlined text-primary" style="font-size:17px;font-variation-settings:'FILL' 1">cloud_upload</span>
+                Upload Report
+                <span class="material-symbols-outlined text-primary" style="font-size:17px">arrow_forward</span>
+              </button>
+
+              <!-- Fill Manually (secondary) -->
+              <button
+                onclick="openManual()"
+                class="flex items-center gap-2 bg-white/15 border border-white/25 text-white font-bold text-sm px-6 py-3 rounded-full hover:bg-white/25 transition-all duration-200">
+                <span class="material-symbols-outlined text-white" style="font-size:17px">edit_note</span>
+                Fill Manually
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- ── END POST A NEED ── -->
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="lg:col-span-5 space-y-8">
+
+        <!-- Suggested Matches -->
+        <div class="bg-surface-container-lowest p-8 rounded-lg shadow-[0_20px_40px_rgba(0,108,68,0.04)]">
+          <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-bold text-on-surface">Suggested Matches</h3>
+            <span id="matchesBadge" class="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">New: 4</span>
+          </div>
+          <div id="matchesContainer" class="space-y-8">
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-4">
+                <div class="relative">
+                  <img alt="Volunteer" class="w-14 h-14 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEZjWNcC2HWeQTGuM_KTozxluf4qic5XD5rFoZvjRJZmpB6L_ou_Ljug6xN_PFv6041IgtST9l58EyKK65xQZZ9A7Wkg1dm1-u7G_n27mQOXIEWHvrJ4FCUGkFNPlxHB2uoECU7VMWf90GBNIPyIqnpU0uXc4PWNosSWjoQYqiV7DSzocXTixtz8PxgMjajhygtLogoF38EVcSbQg1wDCre1bTapxK_pe_XZTH5I-u0bwxveGhOcFXH99BebukFjPd6k7RLXsS6eRs"/>
+                  <div class="absolute -bottom-1 -right-1 bg-white p-1 rounded-full">
+                    <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold">92%</div>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-bold text-on-surface">Dr. Rahul Sharma</h4>
+                  <div class="flex flex-wrap gap-2 mt-1">
+                    <span class="px-3 py-0.5 bg-primary-fixed-dim/30 text-on-primary-fixed-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">Emergency Care</span>
+                    <span class="px-3 py-0.5 bg-primary-fixed-dim/30 text-on-primary-fixed-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">Medicine</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button class="flex-1 py-3 bg-primary text-on-primary rounded-full font-bold text-sm shadow-lg shadow-primary/10">Approve</button>
+                <button class="flex-1 py-3 bg-surface-container-highest text-on-surface rounded-full font-bold text-sm">Skip</button>
+              </div>
+            </div>
+            <hr class="border-surface-container"/>
+            <div class="flex flex-col gap-4">
+              <div class="flex items-center gap-4">
+                <div class="relative">
+                  <img alt="Volunteer" class="w-14 h-14 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUxHntjqyekpgB0zfP2-PsZXYbfFTeJWyfyM-y42FhLhs52Tohcj8iFsxk4NBDU-CKYW7Jeg-yPoukzIXSN3JELuKg3WgML3MlkrhqjBiqrL851Ad2db98l242mJmelQds9ajXc0VjiWmCyytPpiUFAWbSc7b_g0-z9Gr3kNL6C_IXdoO5HveXhkZyibQA2v9o0CV7RXXwEIJxlxLV_PTuER46eh3kZVhtHmBUE1w8_j9CKddxZ_iDkPBgv-lJW0l2zXkqRLO5MAJi"/>
+                  <div class="absolute -bottom-1 -right-1 bg-white p-1 rounded-full">
+                    <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold">88%</div>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <h4 class="font-bold text-on-surface">Priya Deshmukh</h4>
+                  <div class="flex flex-wrap gap-2 mt-1">
+                    <span class="px-3 py-0.5 bg-primary-fixed-dim/30 text-on-primary-fixed-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">Social Work</span>
+                    <span class="px-3 py-0.5 bg-primary-fixed-dim/30 text-on-primary-fixed-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">Counseling</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button class="flex-1 py-3 bg-primary text-on-primary rounded-full font-bold text-sm shadow-lg shadow-primary/10">Approve</button>
+                <button class="flex-1 py-3 bg-surface-container-highest text-on-surface rounded-full font-bold text-sm">Skip</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heatmap -->
+        <div class="bg-surface-container-lowest rounded-lg overflow-hidden shadow-[0_20px_40px_rgba(0,108,68,0.04)]">
+          <div class="p-8 pb-4">
+            <h3 class="text-xl font-bold text-on-surface">Needs Heatmap</h3>
+            <p class="text-on-surface-variant text-sm">High-density areas for outreach</p>
+          </div>
+          <div class="h-[300px] w-full relative">
+            <img alt="Map background" class="w-full h-full object-cover grayscale opacity-40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUKLZz3CikCkNnrorR8TkYK7He9a2l9AU7O9Qo59X12pcFRFpzSsJDK41BBV8zSI0PgL2aiuoymopl4u35gBd1qkKih83_gk5mvC7fuojCoyGJ93v0sd7lcWfNWUmT7lCnap3fpEDgeds4-5UoTsVYKT4oC2X5oD1P4IhDGKewe2AO9WGZRWdMBuWL8dxmgcEclezjIUK7MJqiIFBqVA3dIrTlQXAd9zb5wGg8e_1ch64HNS8agDHHEXWo1b5hygU6y8vi4ZVAkw11"/>
+            <div class="absolute inset-0 bg-primary/5 pointer-events-none"></div>
+            <div class="absolute top-1/4 left-1/3 w-20 h-20 bg-tertiary/30 rounded-full blur-2xl animate-pulse"></div>
+            <div class="absolute bottom-1/3 right-1/4 w-16 h-16 bg-secondary/20 rounded-full blur-2xl"></div>
+            <div class="absolute top-1/2 left-1/2 w-24 h-24 bg-tertiary/20 rounded-full blur-3xl"></div>
+            <div class="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-tertiary"></div>
+                <span class="text-xs font-bold text-on-surface">High Pressure Zone</span>
+              </div>
+              <span class="text-[10px] font-bold text-on-surface-variant">Update: Just now</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity Timeline -->
+    <section class="bg-white p-8 rounded-xl border border-primary/5 shadow-sm fade-up fade-up-4">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h3 class="text-2xl font-bold text-on-surface">Recent Activity</h3>
+          <p class="text-on-surface-variant text-sm mt-0.5">Live updates from your team</p>
+        </div>
+        <button class="p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors">
+          <span class="material-symbols-outlined">filter_list</span>
+        </button>
+      </div>
+      <div id="activityContainer" class="space-y-8 relative before:absolute before:left-[13px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-primary/30 before:via-secondary/20 before:to-tertiary/20">
+        <div class="relative pl-10">
+          <div class="absolute left-0 top-1 w-7 h-7 rounded-full bg-primary-container border-[3px] border-white shadow-md timeline-dot-first flex items-center justify-center">
+            <span class="material-symbols-outlined text-white" style="font-size:13px;font-variation-settings:'FILL' 1">check</span>
+          </div>
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <p class="text-on-surface font-bold">"School Supplies" need completed</p>
+              <p class="text-on-surface-variant text-sm">Verified by Volunteer Sarah Jenks</p>
+            </div>
+            <span class="text-xs font-bold text-primary bg-primary/8 px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">15 mins ago</span>
+          </div>
+        </div>
+        <div class="relative pl-10">
+          <div class="absolute left-0 top-1 w-7 h-7 rounded-full bg-secondary border-[3px] border-white shadow-md flex items-center justify-center">
+            <span class="material-symbols-outlined text-white" style="font-size:13px;font-variation-settings:'FILL' 1">currency_rupee</span>
+          </div>
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <p class="text-on-surface font-bold">New Donation Received</p>
+              <p class="text-on-surface-variant text-sm">₹12,500 from Ananya Foundation</p>
+            </div>
+            <span class="text-xs font-bold text-outline bg-surface-container px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">2 hours ago</span>
+          </div>
+        </div>
+        <div class="relative pl-10">
+          <div class="absolute left-0 top-1 w-7 h-7 rounded-full bg-tertiary border-[3px] border-white shadow-md flex items-center justify-center">
+            <span class="material-symbols-outlined text-white" style="font-size:13px;font-variation-settings:'FILL' 1">warning</span>
+          </div>
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div>
+              <p class="text-on-surface font-bold">Critical Need: Medical Oxygen</p>
+              <p class="text-on-surface-variant text-sm">Added from Field Report #402</p>
+            </div>
+            <span class="text-xs font-bold text-outline bg-surface-container px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">4 hours ago</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="w-full border-t border-emerald-900/6 bg-white mt-20 fade-up fade-up-5">
+    <div class="flex flex-col md:flex-row justify-between items-center px-8 py-10 max-w-7xl mx-auto space-y-6 md:space-y-0">
+      <div class="flex flex-col items-center md:items-start space-y-1.5">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center">
+            <span class="material-symbols-outlined text-white" style="font-size:13px;font-variation-settings:'FILL' 1">volunteer_activism</span>
+          </div>
+          <span class="text-base font-bold text-emerald-900">SevaSetu</span>
+        </div>
+        <p class="text-sm text-slate-400">© 2024 SevaSetu · Elevated Neighborliness.</p>
+      </div>
+      <div class="flex flex-wrap justify-center gap-8">
+        <a class="text-slate-400 hover:text-emerald-600 text-sm transition-colors duration-200" href="#">Privacy Policy</a>
+        <a class="text-slate-400 hover:text-emerald-600 text-sm transition-colors duration-200" href="#">Terms of Service</a>
+        <a class="text-slate-400 hover:text-emerald-600 text-sm transition-colors duration-200" href="#">Contact Us</a>
+        <a class="text-slate-400 hover:text-emerald-600 text-sm transition-colors duration-200" href="#">Community Guidelines</a>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<!-- Mobile Nav -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-6 py-4 z-50 flex justify-between items-center">
+  <a class="flex flex-col items-center text-slate-400" href="#"><span class="material-symbols-outlined">home</span></a>
+  <a class="flex flex-col items-center text-slate-400" href="#"><span class="material-symbols-outlined">explore</span></a>
+  <a class="flex flex-col items-center text-emerald-600" href="#"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">dashboard</span></a>
+  <a class="flex flex-col items-center text-slate-400" href="#"><span class="material-symbols-outlined">volunteer_activism</span></a>
+  <a class="flex flex-col items-center text-slate-400" href="#"><span class="material-symbols-outlined">settings</span></a>
+</nav>
+
+<script>
+/* Hamburger */
+function toggleMenu() { document.getElementById('nav-dropdown').classList.toggle('open'); }
+document.addEventListener('click', function(e) {
+  const w = document.getElementById('nav-wrapper');
+  if (!w.contains(e.target)) document.getElementById('nav-dropdown').classList.remove('open');
+});
+
+/* Upload modal */
+function openModal() { document.getElementById('post-modal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal() { document.getElementById('post-modal').classList.remove('open'); document.body.style.overflow=''; clearFile(); }
+function closeModalOutside(e) { if(e.target===document.getElementById('post-modal')) closeModal(); }
+
+/* Manual modal */
+function openManual() { document.getElementById('manual-modal').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeManual() { document.getElementById('manual-modal').classList.remove('open'); document.body.style.overflow=''; }
+function closeManualOutside(e) { if(e.target===document.getElementById('manual-modal')) closeManual(); }
+
+/* File handling */
+function handleFileSelect(e) { const f=e.target.files[0]; if(f) showFile(f); }
+function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function handleDragLeave() { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('drag-over'); const f=e.dataTransfer.files[0]; if(f) showFile(f); }
+function showFile(f) {
+  document.getElementById('file-name').textContent=f.name;
+  document.getElementById('file-size').textContent=(f.size/1024).toFixed(1)+' KB';
+  const p=document.getElementById('file-preview'); p.classList.remove('hidden'); p.classList.add('flex');
+  document.getElementById('submit-btn').removeAttribute('disabled');
+}
+function clearFile(e) {
+  if(e) e.stopPropagation();
+  document.getElementById('file-input').value='';
+  const p=document.getElementById('file-preview'); p.classList.add('hidden'); p.classList.remove('flex');
+  document.getElementById('submit-btn').setAttribute('disabled','');
+}
+</script>
+<script src="{{ url_for('static', filename='js/ngo_dashboard.js') }}"></script>
+</body></html>

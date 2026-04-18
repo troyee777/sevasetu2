@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}SevaSetu | Get Started{% endblock %}
+
+{% block head %}
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}"/>
+{% endblock %}
+
+{% block content %}
+
+<div class="container" style="background: #eef1f5;">
+
+  <!-- ── LEFT PANEL ── -->
+  <div class="left">
+    <div class="logo">
+      <div class="logo-icon">
+        <i class="fa-solid fa-hand-holding-heart"></i>
+      </div>
+      <div class="logo-text">SevaSetu</div>
+    </div>
+
+    <h1>
+      Bridging gaps,<br>
+      <span class="highlight">building neighbors.</span>
+    </h1>
+
+    <p>
+      Join a digital commons where kindness is the currency
+      and every small act of service builds a stronger community.
+    </p>
+
+    <div class="community-card">
+      <div class="card-animation">
+        <div class="card-video-label">Community Engagement</div>
+        <!-- Placeholder for video — replace src when you have the file -->
+        <!-- <video class="card-video" autoplay muted loop playsinline>
+          <source src="{{ url_for('static', filename='video/community.mp4') }}" type="video/mp4">
+        </video> -->
+        <div style="width:100%;height:100%;background:linear-gradient(135deg,#0d4a2e,#1a7a52);
+                    display:flex;align-items:center;justify-content:center;">
+          <i class="fa-solid fa-people-group" style="font-size:48px;color:rgba(255,255,255,0.3);"></i>
+        </div>
+      </div>
+      <div class="card-footer">
+        <p>Join 2,400+ neighbors already helping out.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="right">
+    <div class="form-box">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="active" id="signinTab">Sign In</button>
+        <button id="signupTab">Sign Up</button>
+      </div>
+
+      <!-- Dynamic heading -->
+      <h2 id="formTitle">Welcome Back</h2>
+      <p class="subtext" id="formSubtext">Access your community dashboard and needs.</p>
+
+      <!-- Error message box -->
+      <div id="auth-error" style="
+        display:none;
+        background:#fee2e2;
+        color:#991b1b;
+        padding:10px 14px;
+        border-radius:10px;
+        font-size:13px;
+        margin-bottom:16px;
+        font-weight:500;">
+      </div>
+
+      <!-- Google Button -->
+      <button class="google-btn" id="google-login-btn" type="button">
+        <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="divider"><span>OR USE EMAIL</span></div>
+
+      <!-- ── SIGN IN FORM ── -->
+      <form id="emailSignInForm" class="email-form">
+        <div class="field-group">
+          <label for="emailSignInInput">Email Address</label>
+          <input type="email" id="emailSignInInput"
+                 placeholder="name@example.com" required/>
+        </div>
+
+        <div class="field-group">
+          <div class="field-header">
+            <label for="passwordSignInInput">Password</label>
+            <span class="forgot">Forgot?</span>
+          </div>
+          <input type="password" id="passwordSignInInput"
+                 placeholder="••••••••" required/>
+        </div>
+
+        <button type="submit" class="submit-btn" data-label="Sign In to SevaSetu">
+          Sign In to SevaSetu
+        </button>
+      </form>
+
+      <!-- ── SIGN UP FORM (hidden by default) ── -->
+      <form id="emailSignUpForm" class="email-form" style="display:none;">
+        <div class="field-group">
+          <label for="emailSignUpInput">Email Address</label>
+          <input type="email" id="emailSignUpInput"
+                 placeholder="name@example.com" required/>
+        </div>
+
+        <div class="field-group">
+          <label for="passwordSignUpInput">Password</label>
+          <input type="password" id="passwordSignUpInput"
+                 placeholder="Min. 6 characters" required/>
+        </div>
+
+        <button type="submit" class="submit-btn" data-label="Create My Account">
+          Create My Account
+        </button>
+      </form>
+
+      <div class="footer-links">
+        <p class="footer-text">By joining, you're making a difference.</p>
+        <div class="legal-links">
+          <a href="#">Privacy Policy</a>
+          <span>•</span>
+          <a href="#">Terms of Service</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+  <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

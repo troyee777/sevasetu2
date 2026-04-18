@@ -89,7 +89,10 @@
   {% block head %}{% endblock %}
 </head>
 
-<body class="bg-surface font-body text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<body class="bg-surface font-body text-on-surface 
+             selection:bg-primary-container 
+             selection:text-on-primary-container
+             min-h-screen flex flex-col">
 
   <!-- Navbar -->
   <header class="fixed top-0 z-50 w-full bg-surface-container-low/80 backdrop-blur-md shadow-[0_20px_40px_rgba(0,108,68,0.06)]">
@@ -155,7 +158,7 @@
   </header>
 
   <!-- Page Content -->
-  <main class="pt-24">
+  <main class="pt-24 flex-1">
     {% block content %}{% endblock %}
   </main>
 

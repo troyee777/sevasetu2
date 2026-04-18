@@ -1,0 +1,432 @@
+/* ══════════════════════════════════════════
+   SevaSetu — Role Selection  |  style.css
+   Pure CSS, no frameworks
+══════════════════════════════════════════ */
+
+/* ── CSS Variables ── */
+:root {
+  --primary:           #006c44;
+  --primary-light:     #e8f4ee;
+  --primary-shadow:    rgba(0, 108, 68, 0.18);
+  --secondary:         #855300;
+  --secondary-light:   #fff4e6;
+  --secondary-shadow:  rgba(133, 83, 0, 0.18);
+  --bg:                #fafaf7;
+  --white:             #ffffff;
+  --text:              #121c2a;
+  --text-muted:        #3e4942;
+  --border:            #e2e8e4;
+  --radius-card:       20px;
+  --radius-btn:        9999px;
+  --radius-icon:       16px;
+  --font:              'DM Sans', sans-serif;
+  --font-display:      'DM Serif Display', serif;
+  --transition:        0.3s ease;
+  --header-h:          72px;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+a { text-decoration: none; color: inherit; }
+
+img { display: block; max-width: 100%; }
+
+/* ══════════════════════════════════════════
+   HEADER / TOPBAR
+══════════════════════════════════════════ */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  height: var(--header-h);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 100%;
+  gap: 24px;
+}
+
+/* Logo */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-icon {
+  width: 38px;
+  height: 38px;
+  background: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.4px;
+}
+
+/* Nav */
+.nav-links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.nav-links a {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: color var(--transition);
+}
+
+.nav-links a:hover,
+.nav-links a.nav-active {
+  color: var(--primary);
+}
+
+.nav-links a.nav-active {
+  font-weight: 700;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 2px;
+}
+
+/* Avatar */
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ══════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════ */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--header-h) + 56px) 24px 64px;
+}
+
+.content-wrap {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 52px;
+}
+
+/* ── Heading ── */
+.heading-section {
+  text-align: center;
+  max-width: 640px;
+}
+
+.heading-section h1 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 50px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  margin-bottom: 16px;
+}
+
+.heading-section p {
+  font-size: 16px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+/* ── Cards Grid ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  width: 100%;
+}
+
+/* ── Role Card base ── */
+.role-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 40px;
+  border-radius: var(--radius-card);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.role-card:hover {
+  transform: translateY(-10px);
+}
+
+.role-card.selected {
+  transform: translateY(-6px);
+}
+
+/* NGO Card */
+.ngo-card {
+  background: var(--primary-light);
+  border-color: rgba(0, 108, 68, 0.12);
+}
+
+.ngo-card:hover {
+  box-shadow: 0 24px 48px var(--primary-shadow);
+  border-color: rgba(0, 108, 68, 0.28);
+}
+
+.ngo-card.selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 108, 68, 0.15), 0 20px 40px var(--primary-shadow);
+}
+
+/* Volunteer Card */
+.volunteer-card {
+  background: var(--secondary-light);
+  border-color: rgba(133, 83, 0, 0.12);
+}
+
+.volunteer-card:hover {
+  box-shadow: 0 24px 48px var(--secondary-shadow);
+  border-color: rgba(133, 83, 0, 0.28);
+}
+
+.volunteer-card.selected {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px rgba(133, 83, 0, 0.15), 0 20px 40px var(--secondary-shadow);
+}
+
+/* Card icon */
+.card-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-icon);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin-bottom: 28px;
+  transition: transform var(--transition);
+}
+
+.role-card:hover .card-icon {
+  transform: scale(1.08);
+}
+
+.ngo-icon {
+  background: rgba(0, 108, 68, 0.12);
+  color: var(--primary);
+}
+
+.volunteer-icon {
+  background: rgba(133, 83, 0, 0.12);
+  color: var(--secondary);
+}
+
+/* Card text */
+.role-card h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
+}
+
+.role-card p {
+  font-size: 15px;
+  color: var(--text-muted);
+  line-height: 1.7;
+  flex: 1;
+  margin-bottom: 36px;
+}
+
+/* Card button */
+.card-btn {
+  width: 100%;
+  padding: 15px 32px;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+  letter-spacing: 0.1px;
+}
+
+.card-btn:hover {
+  opacity: 0.92;
+  transform: scale(1.02);
+}
+
+.card-btn:active {
+  transform: scale(0.97);
+}
+
+.ngo-btn {
+  background: var(--primary);
+  box-shadow: 0 6px 20px var(--primary-shadow);
+}
+
+.volunteer-btn {
+  background: var(--secondary);
+  box-shadow: 0 6px 20px var(--secondary-shadow);
+}
+
+/* ── Info Note ── */
+.info-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: var(--radius-btn);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+  backdrop-filter: blur(8px);
+}
+
+.info-note i {
+  color: var(--primary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════ */
+.footer {
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 28px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer-logo {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.3px;
+}
+
+.footer-brand p {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+
+.footer-links a {
+  font-size: 13px;
+  color: #9ca3af;
+  transition: color var(--transition);
+}
+
+.footer-links a:hover {
+  color: var(--primary);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .topbar-inner {
+    padding: 0 18px;
+  }
+
+  .role-card {
+    padding: 36px 28px;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px 18px;
+  }
+
+  .footer-links {
+    gap: 18px;
+  }
+}
