@@ -157,9 +157,11 @@ def verify_qstash_signature(request_body: bytes, signature_header: str) -> bool:
         return True # Skip in local dev
         
     try:
-        # The official SDK handles all the HMAC/Canonicalization logic
+        # Convert bytes to string, which is what the Receiver SDK expects
+        body_str = request_body.decode('utf-8')
+        
         return receiver.verify(
-            body=request_body,
+            body=body_str,
             signature=signature_header
         )
     except Exception as e:
