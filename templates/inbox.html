@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Inbox | SevaSetu</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#006c44",
+                        "surface": "#f8f9ff",
+                        "on-surface": "#121c2a",
+                        "outline": "#6e7a71",
+                    },
+                    fontFamily: { "sans": ["Plus Jakarta Sans"] },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+
+<body class="bg-surface text-on-surface antialiased overflow-hidden h-screen flex flex-col">
+
+<!-- ================= HEADER ================= -->
+<header class="flex justify-between items-center px-6 h-16 w-full bg-emerald-50/80 backdrop-blur-md shadow-sm z-30">
+    
+    <div class="flex items-center gap-4">
+        <button id="menuToggle" class="md:hidden text-primary">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <span class="text-2xl font-bold text-emerald-900">SevaSetu</span>
+    </div>
+
+    <div class="flex items-center gap-6">
+
+        <!-- SEARCH -->
+        <div class="hidden sm:flex items-center bg-white/50 rounded-full px-4 py-1.5 border">
+            <span class="material-symbols-outlined text-outline mr-2">search</span>
+            <input id="searchConversations" class="bg-transparent text-sm w-48 outline-none" placeholder="Search..." type="text"/>
+        </div>
+
+        <div class="flex items-center gap-4">
+
+            <span id="notificationsBtn" class="material-symbols-outlined cursor-pointer p-2 hover:bg-emerald-100 rounded-full">
+                notifications
+            </span>
+                   
+            <!-- ❌ REMOVED chatBubbleBtn -->
+
+            <div class="relative">
+                <img id="userProfileImage" class="w-10 h-10 rounded-full border-2 border-primary cursor-pointer"
+                     src="https://ui-avatars.com/api/?name=User&background=006c44&color=fff"/>
+                <input type="file" id="profileImageInput" class="hidden" accept="image/*"/>
+            </div>
+
+        </div>
+    </div>
+</header>
+
+<!-- ================= MAIN ================= -->
+<main class="flex flex-1 overflow-hidden">
+
+    <!-- LEFT PANEL -->
+    <section class="w-full md:w-[30%] bg-[#eff4ff] border-r flex flex-col">
+        
+        <div class="p-6">
+            <h2 class="text-2xl font-bold mb-4">Messages</h2>
+
+            <div class="relative">
+                <input id="searchMessages" class="w-full pl-10 pr-4 py-3 bg-white rounded-2xl text-sm"
+                       placeholder="Search" type="text"/>
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">
+                    search
+                </span>
+            </div>
+        </div>
+
+        <div id="messagesList" class="flex-1 overflow-y-auto hide-scrollbar px-4 pb-6">
+            <!-- dynamic chats -->
+        </div>
+
+    </section>
+
+    <!-- RIGHT PANEL -->
+    <section class="hidden md:flex flex-col flex-1 bg-white relative">
+
+        <!-- HEADER -->
+        <header class="h-20 flex justify-between items-center px-8 border-b">
+
+            <div class="flex items-center gap-4">
+                <img id="chatUserImage" class="w-10 h-10 rounded-full hidden"/>
+                <div>
+                    <h3 id="chatUserName" class="font-bold text-sm">Select a conversation</h3>
+                    <p id="chatUserStatus" class="text-xs text-outline"></p>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="flex items-center gap-3 text-gray-500">
+
+                <button id="callBtn" class="p-2 hover:bg-gray-100 rounded-full">
+                    <span class="material-symbols-outlined">call</span>
+                </button>
+
+                <button id="videoCallBtn" class="p-2 hover:bg-gray-100 rounded-full">
+                    <span class="material-symbols-outlined">video_call</span>
+                </button>
+
+                <!-- OPTIONS FIXED -->
+                <div class="relative">
+                    <button id="moreOptionsBtn" class="p-2 hover:bg-gray-100 rounded-full">
+                        <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+
+                    <div id="optionsMenu" class="hidden absolute right-0 top-12 bg-white shadow-lg rounded-xl p-3 w-40 z-50">
+                        <p class="p-2 hover:bg-gray-100 rounded cursor-pointer">Delete Chat</p>
+                        <p class="p-2 hover:bg-gray-100 rounded cursor-pointer">Mark Unread</p>
+                        <p class="p-2 hover:bg-gray-100 rounded cursor-pointer">Star Chat</p>
+                    </div>
+                </div>
+
+            </div>
+        </header>
+
+        <!-- MESSAGES -->
+        <div id="messagesContainer" class="flex-1 overflow-y-auto p-8">
+            <div class="text-center text-outline mt-20">
+                No conversation selected
+            </div>
+        </div>
+
+        <!-- INPUT AREA -->
+        <div class="p-6 relative">
+
+            <!-- FILE INPUT -->
+            <input type="file" id="fileInput" class="hidden">
+
+            <div class="flex items-center gap-3 bg-[#eff4ff] p-2 rounded-2xl">
+
+                <button id="attachmentBtn" class="p-2 text-primary hover:bg-white rounded-full">
+                    <span class="material-symbols-outlined">add_circle</span>
+                </button>
+
+                <button id="emojiBtn" class="p-2 text-outline hover:bg-white rounded-full">
+                    <span class="material-symbols-outlined">mood</span>
+                </button>
+
+                <input id="messageInput" class="flex-1 bg-transparent outline-none text-sm"
+                       placeholder="Type message..." type="text"/>
+
+                <button id="sendBtn" class="bg-primary text-white p-2.5 rounded-xl">
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+
+            </div>
+
+            <!-- EMOJI BOX -->
+           <div id="emojiBox" class="hidden absolute bottom-16 left-10 bg-white shadow-lg p-3 rounded-xl z-50 space-x-2">
+               <span class="emoji">😊</span>
+               <span class="emoji">😂</span>
+               <span class="emoji">😍</span>
+               <span class="emoji">😎</span>
+               <span class="emoji">😢</span>
+               <span class="emoji">👍</span>
+               <span class="emoji">🎉</span>
+               <span class="emoji">❤️</span>
+               <span class="emoji">🔥</span>
+           </div>
+        </div>
+
+    </section>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/inbox.js') }}"></script>
+
+</body>
+</html>

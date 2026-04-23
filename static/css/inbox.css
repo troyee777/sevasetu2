@@ -1,0 +1,26 @@
+/* Tailwind Config (Via CSS Variable mapping) */
+:root {
+    --primary: #006c44;
+    --surface: #f8f9ff;
+    --on-surface: #121c2a;
+    --outline: #6e7a71;
+}
+
+body { 
+    font-family: 'Plus Jakarta Sans', sans-serif; 
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.hide-scrollbar::-webkit-scrollbar { 
+    display: none; 
+}
+
+.hide-scrollbar { 
+    -ms-overflow-style: none; 
+    scrollbar-width: none; 
+}
+
+/* Custom Tailwind Config script should be kept in HTML or handled via build tool */
