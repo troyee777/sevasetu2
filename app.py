@@ -958,10 +958,11 @@ def worker_process_report():
         logger.error(f"[Worker:process-report] Failed — {exc}", exc_info=True)
  
         # Mark as failed so the processing page can show an error
-        report_ref.update({
+        update={
             "status": "failed",
             "error":  str(exc)[:500],
-        })
+        }
+        firebase_services.update_report_status(report_id,update)
  
         # Return 500 so QStash retries (up to the retry limit you set)
         return jsonify({"error": str(exc)}), 500
