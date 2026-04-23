@@ -4,3 +4,4 @@ python-dotenv
 requests
 google-generativeai
 python-docx
+imagekitio
