@@ -45,6 +45,7 @@ import base64
 import json
 import logging
 from typing import Any
+from upstash_qstash import Receiver
 
 import requests   # pip install requests  (already used in most Flask projects)
 
@@ -129,9 +130,7 @@ def enqueue_matching(need_id: str, need_data: dict) -> bool:
 # ═════════════════════════════════════════════════════════════════════════════
 # SIGNATURE VERIFICATION  (call this in your worker routes)
 # ═════════════════════════════════════════════════════════════════════════════
-
-def verify_qstash_signature(request_body: bytes, signature_header: str) -> bool:
-    """
+"""
     Verify that an incoming request to /api/internal/* actually came from
     QStash and not a random external caller.
 
@@ -144,27 +143,28 @@ def verify_qstash_signature(request_body: bytes, signature_header: str) -> bool:
     How it works:
         QStash signs the request body with your signing key using HMAC-SHA256.
         We verify the signature here before trusting the payload.
-    """
-    signing_key = os.environ.get("QSTASH_CURRENT_SIGNING_KEY", "")
-    next_key    = os.environ.get("QSTASH_NEXT_SIGNING_KEY", "")
+"""
 
-    if not signing_key:
-        # If no key is configured, skip verification (for local dev only)
-        logger.warning("[QStash] QSTASH_CURRENT_SIGNING_KEY not set — skipping verification.")
-        return True
 
-    for key in (signing_key, next_key):
-        if not key:
-            continue
-        expected = base64.b64encode(
-            hmac.new(key.encode(), request_body, hashlib.sha256).digest()
-        ).decode()
-        if hmac.compare_digest(expected, signature_header):
-            return True
+# Initialize once at the top
+receiver = Receiver(
+    current_signing_key=os.environ.get("QSTASH_CURRENT_SIGNING_KEY", ""),
+    next_signing_key=os.environ.get("QSTASH_NEXT_SIGNING_KEY", "")
+)
 
-    logger.warning("[QStash] Signature verification failed.")
-    return False
-
+def verify_qstash_signature(request_body: bytes, signature_header: str) -> bool:
+    if not os.environ.get("QSTASH_CURRENT_SIGNING_KEY"):
+        return True # Skip in local dev
+        
+    try:
+        # The official SDK handles all the HMAC/Canonicalization logic
+        return receiver.verify(
+            body=request_body,
+            signature=signature_header
+        )
+    except Exception as e:
+        logger.error(f"Signature verification error: {e}")
+        return False
 
 # ═════════════════════════════════════════════════════════════════════════════
 # INTERNAL — low-level publish call
