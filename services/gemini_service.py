@@ -25,7 +25,7 @@ import re
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL = "gemini-3.1-flash-lite"
+GEMINI_MODEL = "gemini-1.5-flash"   # cheaper, faster, and better at structured output than 2.5 for our use case
 
 
 # ══════════════════════════════════════════════════════════════
