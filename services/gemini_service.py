@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 # ── Model ─────────────────────────────────────────────────────────────────────
 # gemini-1.5-flash: 15 RPM / 1M TPM free tier — much more generous than 2.5-flash
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 
 
 # ══════════════════════════════════════════════════════════════
