@@ -103,23 +103,40 @@ from qstash import Receiver
 
 def verify_qstash_signature(request_body: bytes, signature_header: str) -> bool:
     current_key = os.environ.get("QSTASH_CURRENT_SIGNING_KEY", "")
-    next_key    = os.environ.get("QSTASH_NEXT_SIGNING_KEY", "")
     
+    # 1. Dev Bypass
     if not current_key:
-        return True # Dev bypass
-
+        return True
+        
     try:
-        # Use the official Receiver
-        receiver = Receiver(current_signing_key=current_key, next_signing_key=next_key)
+        from qstash import Receiver
         
-        # Log for debugging - this will show up in Vercel logs
-        logger.info(f"DEBUG: Body length: {len(request_body)}")
-        logger.info(f"DEBUG: Signature header: {signature_header[:20]}...")
+        # 2. Force the URL check to be the full public URL
+        # Upstash verifies that the URL in the signature matches the URL of the receiver
+        receiver = Receiver(
+            current_signing_key=current_key,
+            next_signing_key=os.environ.get("QSTASH_NEXT_SIGNING_KEY", ""),
+        )
         
-        # The SDK expects a string for the body
-        return receiver.verify(body=request_body.decode('utf-8'), signature=signature_header)
+        # 3. Explicitly pass the full URL of the route being called
+        # QStash sends the request to this exact URL.
+        url = f"{_base_url()}/api/internal/process-report"
+        
+        # The verify method can take the 'url' argument to ensure 
+        # the signature matches the destination
+        is_valid = receiver.verify(
+            body=request_body.decode('utf-8'),
+            signature=signature_header,
+            url=url 
+        )
+        
+        if not is_valid:
+            logger.error(f"DEBUG: Verification failed for URL: {url}")
+            
+        return is_valid
+        
     except Exception as e:
-        logger.error(f"DEBUG: Signature Exception: {e}")
+        logger.error(f"Signature verification system error: {e}")
         return False
 # ═════════════════════════════════════════════════════════════════════════════
 # INTERNAL — low-level publish
