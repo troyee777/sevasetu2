@@ -99,34 +99,28 @@ def enqueue_matching(need_id: str, need_data: dict) -> bool:
 # ═════════════════════════════════════════════════════════════════════════════
 # SIGNATURE VERIFICATION
 # ═════════════════════════════════════════════════════════════════════════════
+from qstash import Receiver
 
-import hmac
-import hashlib
-import os
+def verify_qstash_signature(request_body: bytes, signature_header: str) -> bool:
+    current_key = os.environ.get("QSTASH_CURRENT_SIGNING_KEY", "")
+    next_key    = os.environ.get("QSTASH_NEXT_SIGNING_KEY", "")
+    
+    if not current_key:
+        return True # Dev bypass
 
-def verify_qstash_signature(request_body: bytes, signature: str) -> bool:
-    signing_key = os.environ.get("QSTASH_CURRENT_SIGNING_KEY", "")
-    if not signing_key:
-        return True # Dev mode
-    
-    # 1. Split the signature (Upstash signatures often come as a string)
-    # If using the modern Upstash signature, it might need to be split
-    # But usually, the signature header IS the signature.
-    
-    # 2. Re-calculate the HMAC-SHA256
-    computed_signature = hmac.new(
-        signing_key.encode("utf-8"),
-        request_body,
-        hashlib.sha256
-    ).digest()
-    
-    # 3. Base64 encode the computed hash and compare
-    import base64
-    computed_signature_b64 = base64.b64encode(computed_signature).decode("utf-8")
-    
-    # Use constant time comparison to prevent timing attacks
-    return hmac.compare_digest(computed_signature_b64, signature)
-
+    try:
+        # Use the official Receiver
+        receiver = Receiver(current_signing_key=current_key, next_signing_key=next_key)
+        
+        # Log for debugging - this will show up in Vercel logs
+        logger.info(f"DEBUG: Body length: {len(request_body)}")
+        logger.info(f"DEBUG: Signature header: {signature_header[:20]}...")
+        
+        # The SDK expects a string for the body
+        return receiver.verify(body=request_body.decode('utf-8'), signature=signature_header)
+    except Exception as e:
+        logger.error(f"DEBUG: Signature Exception: {e}")
+        return False
 # ═════════════════════════════════════════════════════════════════════════════
 # INTERNAL — low-level publish
 # ═════════════════════════════════════════════════════════════════════════════
