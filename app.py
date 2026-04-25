@@ -467,7 +467,17 @@ def api_skip_match(match_id):
     firebase_services.update_match_status(match_id, "skipped")
     return jsonify({"success": True})
 
-
+# ══════════════════════════════════════════════
+# NGO NEEDS PAGE
+# ══════════════════════════════════════════════
+ 
+@app.route("/ngo/needs")
+def ngo_needs_page():
+    if not session.get("user"):
+        return redirect("/getstarted")
+    if session["user"].get("role") != "ngo":
+        return redirect("/select-role")
+    return render_template("ngo_needs_list.html", user=session["user"])
 
 
 # ══════════════════════════════════════════════
