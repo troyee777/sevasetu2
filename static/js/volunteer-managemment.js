@@ -159,8 +159,8 @@ card.innerHTML = `
     <div class="flex items-start justify-between">
         <div class="flex gap-3">
             <div class="relative">
-                <img src="${vol.image || 'images/avatar.png'}"
-                     onerror="this.src='images/avatar.png'"
+                <img src="${vol.image || '/static/images/avatar.png'}"
+                     onerror="this.src='/static/images/avatar.png'"
                      class="w-14 h-14 rounded-full object-cover"/>
 
                 <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
@@ -339,7 +339,7 @@ function updatePendingCount(data) {
     document.getElementById("volJoined").textContent =
     vol.joined || "N/A";
     document.getElementById("volImage").src =
-        vol.image && vol.image !== "" ? vol.image : "images/avatar.png";
+        vol.image && vol.image !== "" ? vol.image : "/static/images/avatar.png";
 
     // ✅ SKILLS FROM JS ONLY
     const skillsContainer = document.getElementById("volSkills");
