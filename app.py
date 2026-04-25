@@ -470,7 +470,11 @@ def api_skip_match(match_id):
 # ══════════════════════════════════════════════
 # NGO NEEDS PAGE
 # ══════════════════════════════════════════════
- 
+
+# ══════════════════════════════════════════════
+# PAGE — NEEDS LIST
+# ══════════════════════════════════════════════
+
 @app.route("/ngo/needs")
 def ngo_needs_page():
     if not session.get("user"):
@@ -478,6 +482,31 @@ def ngo_needs_page():
     if session["user"].get("role") != "ngo":
         return redirect("/select-role")
     return render_template("ngo_needs_list.html", user=session["user"])
+
+
+# ══════════════════════════════════════════════
+# API — ALL NEEDS FOR NGO
+# ══════════════════════════════════════════════
+
+@app.route("/api/ngo/needs")
+def api_ngo_needs():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    uid = session["user"]["uid"]
+    all_needs = firebase_services.get_needs_by_ngo(uid)
+
+    # Serialize Firestore timestamps for JSON
+    for need in all_needs:
+        ts = need.get("created_at")
+        if ts and hasattr(ts, "timestamp"):
+            need["created_at"] = ts.timestamp()
+        ts2 = need.get("updated_at")
+        if ts2 and hasattr(ts2, "timestamp"):
+            need["updated_at"] = ts2.timestamp()
+
+    return jsonify({"needs": all_needs})
+
 
 
 # ══════════════════════════════════════════════

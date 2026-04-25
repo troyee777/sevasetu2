@@ -69,8 +69,8 @@ async function loadNeeds() {
 async function deleteNeed(id, btn) {
   if (!confirm('Are you sure you want to delete this need? This cannot be undone.')) return;
 
-  btn.disabled    = true;
-  btn.textContent = '…';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined text-xl">hourglass_empty</span>';
 
   try {
     const res = await fetch(`/api/ngo/need/${id}`, { method: 'DELETE' });
@@ -81,8 +81,8 @@ async function deleteNeed(id, btn) {
     updateStats();
     showToast('Need deleted.', 'success');
   } catch {
-    btn.disabled    = false;
-    btn.textContent = 'delete';
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-xl">delete</span>';
     showToast('Failed to delete. Please try again.', 'error');
   }
 }
@@ -211,10 +211,10 @@ function getStatusLabel(status) {
 }
 
 function updateStats() {
+  // Stats display elements are optional — only update if present in the DOM
   const open      = allNeeds.filter(n => n.status === 'open').length;
   const assigned  = allNeeds.filter(n => ['assigned','in_progress'].includes(n.status)).length;
   const completed = allNeeds.filter(n => n.status === 'completed').length;
-
   safeSet('statTotal',     allNeeds.length);
   safeSet('statOpen',      open);
   safeSet('statAssigned',  assigned);
@@ -299,8 +299,8 @@ function wireModalButtons() {
   // Choice modal buttons
   document.getElementById('openUpload')?.addEventListener('click', () => {
     closeChoice();
-    // Redirect to dashboard which has the upload flow already wired
-    window.location.href = '/ngo/dashboard';
+    // Redirect to the upload flow on the reports page
+    window.location.href = '/ngo/reports';
   });
 
   document.getElementById('openManual')?.addEventListener('click', () => {
@@ -308,8 +308,7 @@ function wireModalButtons() {
     openManualModal();
   });
 
-  // Close buttons
-  document.getElementById('closeChoiceModal')?.addEventListener('click', closeChoice);
+  // Close manual modal button
   document.getElementById('closeManualModal')?.addEventListener('click', closeManualModal);
 
   // Close on backdrop click
@@ -327,22 +326,29 @@ function wireModalButtons() {
 }
 
 function openChoice() {
-  document.getElementById('choiceModal')?.classList.add('open');
+  const modal = document.getElementById('choiceModal');
+  if (modal) modal.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeChoice() {
-  document.getElementById('choiceModal')?.classList.remove('open');
+  const modal = document.getElementById('choiceModal');
+  if (modal) modal.classList.remove('open');
   document.body.style.overflow = '';
 }
 function openManualModal() {
-  document.getElementById('manualModal')?.classList.add('open');
+  const modal = document.getElementById('manualModal');
+  if (modal) modal.classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(initManualMapOnce, 120);
+  setTimeout(initManualMapOnce, 200);
 }
 function closeManualModal() {
-  document.getElementById('manualModal')?.classList.remove('open');
+  const modal = document.getElementById('manualModal');
+  if (modal) modal.classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// Expose globally for inline onclick handlers in the template
+window.closeManualModal = closeManualModal;
 
 // ══════════════════════════════════════════════════════════════
 // OLA MAPS — MANUAL MODAL LOCATION PICKER
@@ -456,25 +462,9 @@ function wireManualForm() {
     });
   }
 
-  // People counter
-  let peopleCount = 1;
-  document.getElementById('plusBtn')?.addEventListener('click', e => {
-    e.preventDefault();
-    peopleCount++;
-    safeSet('peopleCount', peopleCount);
-  });
-  document.getElementById('minusBtn')?.addEventListener('click', e => {
-    e.preventDefault();
-    if (peopleCount > 1) { peopleCount--; safeSet('peopleCount', peopleCount); }
-  });
-
-  // Auto-resize textareas
-  document.querySelectorAll('textarea').forEach(tx => {
-    tx.style.height = tx.scrollHeight + 'px';
-    tx.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = this.scrollHeight + 'px';
-    });
+  // Prevent Enter key from submitting unexpectedly in the title field
+  document.getElementById('manualTitle')?.addEventListener('keypress', e => {
+    if (e.key === 'Enter') e.preventDefault();
   });
 }
 
@@ -494,7 +484,7 @@ window.handleManualSubmit = async function() {
   if (!urgency)  { showToast('Please select an urgency level.','error'); return; }
 
   const submitBtn = document.getElementById('manualSubmitBtn');
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Submitting…'; }
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">sync</span> Submitting…'; }
 
   // Build location object — same format as dashboard manual modal
   const location = lat && lng
@@ -541,7 +531,7 @@ window.handleManualSubmit = async function() {
   } catch (err) {
     console.error('Manual submit error:', err);
     showToast('Failed to submit. Please try again.', 'error');
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Need'; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<span class="material-symbols-outlined text-lg">send</span> Submit Need'; }
   }
 };
 
