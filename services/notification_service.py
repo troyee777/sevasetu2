@@ -37,7 +37,7 @@ def send_fcm_notification(uid, title, body, data=None):
 
     # 3. Send
     try:
-        response = messaging.send_multicast(message)
+        response = messaging.sendEachForMulticast(message)
         logger.info(f"[FCM] Sent to {uid}. Success: {response.success_count}, Failure: {response.failure_count}")
 
         # 4. Clean up invalid tokens
