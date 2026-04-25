@@ -311,22 +311,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ─── Send Message ────────────────────────────────────────
-    function sendMessage() {
+    async function sendMessage() {
         const input = document.getElementById("messageInput");
         if (!input) return;
         const text = input.value.trim();
         if (!text || !activeConversationId) return;
 
         input.value = "";
-
-        // Optimistically show the message
-        appendMessageToUI({
-            id: null,
-            text,
-            sender_id: currentUserUid,
-            conversation_id: activeConversationId,
-            created_at: new Date().toISOString(),
-        });
 
         // Send via Socket.IO if connected, otherwise fall back to REST
         if (socket && socket.connected) {
@@ -337,11 +328,27 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         } else {
             // REST fallback for when socket isn't available
-            fetch("/api/chat/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ conversation_id: activeConversationId, text }),
-            }).catch(err => console.error("REST send failed:", err));
+            try {
+                const resp = await fetch("/api/chat/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ conversation_id: activeConversationId, text }),
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || "REST send failed");
+
+                appendMessageToUI({
+                    id: data.message_id,
+                    text,
+                    sender_id: currentUserUid,
+                    conversation_id: activeConversationId,
+                    created_at: new Date().toISOString(),
+                });
+                loadConversations(false);
+            } catch (err) {
+                console.error("REST send failed:", err);
+                input.value = text;
+            }
         }
 
         // Stop typing indicator

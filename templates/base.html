@@ -148,7 +148,7 @@
       <a class="block py-2 text-emerald-700 font-bold" href="/">Home</a>
       <a class="block py-2 text-slate-500" href="/discover">Discover</a>
       {% if session.get('user') %}
-      <a class="block py-2 text-slate-500" href="/dashboard">Dashboard</a>
+      <a class="block py-2 text-slate-500" href="/{{ session['user']['role'] }}/dashboard">Dashboard</a>
       <a class="block py-2 text-slate-500" href="/inbox">Inbox</a>
       <a class="block py-2 text-red-400" href="/logout">Logout</a>
       {% else %}

@@ -12,8 +12,11 @@
 'use strict';
 
 let foregroundHandlerReady = false;
+let lastForegroundNotificationKey = '';
+let lastForegroundNotificationAt = 0;
 
 (async function initTopBar() {
+    _setupServiceWorkerMessageHandler();
 
     // ── 0. Fetch topbar data (avatar + notification state) ──────
     let topbarData = {};
@@ -83,6 +86,15 @@ let foregroundHandlerReady = false;
     });
 
 })();
+
+function _setupServiceWorkerMessageHandler() {
+    if (!('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data?.type !== 'SEVASETU_PUSH') return;
+        _showForegroundNotification(event.data.payload || {});
+    });
+}
 
 // ────────────────────────────────────────────────────────────────
 // Internal: Intercept logout to remove current FCM token
@@ -266,15 +278,23 @@ async function _requestAndSaveFcmToken(bellBtn, showSuccessToast = true) {
 // (SW-based background notifications handled in firebase-messaging-sw.js)
 // ────────────────────────────────────────────────────────────────
 function _showForegroundNotification(payload) {
-    const title = payload.notification?.title || 'SevaSetu';
-    const data  = payload.data || {};
-    const body  = payload.notification?.body || data.message_preview || '';
+    const notification = payload.notification || payload.webpush?.notification || {};
+    const data  = payload.data || notification.data || payload.webpush?.data || {};
+    const title = notification.title || data.title || 'SevaSetu';
+    const body  = notification.body || data.body || data.message_preview || '';
 
     if (data.type === 'new_message' && window.location.pathname.startsWith('/inbox')) {
         return;
     }
 
     const clickUrl = data.click_action || (data.conversation_id ? `/inbox?conv_id=${data.conversation_id}` : null);
+    const notificationKey = `${data.type || ''}:${data.conversation_id || ''}:${title}:${body}`;
+    const now = Date.now();
+    if (notificationKey === lastForegroundNotificationKey && now - lastForegroundNotificationAt < 3000) {
+        return;
+    }
+    lastForegroundNotificationKey = notificationKey;
+    lastForegroundNotificationAt = now;
 
     // Show as an in-app toast (browser Notification API requires a gesture on some browsers
     // when the page is already focused, so we use our own toast instead)

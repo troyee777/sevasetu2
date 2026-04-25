@@ -54,7 +54,23 @@ self.addEventListener("push", (event) => {
     const payload = getPayloadJson(event);
     const { title, options } = getNotificationOptions(payload);
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    event.waitUntil(
+        clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+            const appClients = windowClients.filter(client => client.url.startsWith(self.location.origin));
+
+            if (appClients.length > 0) {
+                appClients.forEach(client => {
+                    client.postMessage({
+                        type: "SEVASETU_PUSH",
+                        payload,
+                    });
+                });
+                return;
+            }
+
+            return self.registration.showNotification(title, options);
+        })
+    );
 });
 
 importScripts("https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js");
