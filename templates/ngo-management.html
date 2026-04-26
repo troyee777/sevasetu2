@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SevaSetu Admin - NGO Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#d0dbed",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#a83639",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#002112",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-surface": "#121c2a",
+                    "secondary-fixed": "#ffddb8",
+                    "error": "#ba1a1a",
+                    "primary": "#006c44",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "tertiary-container": "#fa7272",
+                    "surface-container": "#e6eeff",
+                    "background": "#f8f9ff",
+                    "outline": "#6e7a71",
+                    "on-surface-variant": "#3e4942",
+                    "primary-fixed": "#93f7bf",
+                    "on-secondary-container": "#684000",
+                    "surface-container-low": "#eff4ff",
+                    "secondary": "#855300",
+                    "surface-container-high": "#dee9fc",
+                    "outline-variant": "#bdcabf",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#881d24",
+                    "surface-bright": "#f8f9ff",
+                    "surface-tint": "#006c44",
+                    "inverse-surface": "#27313f",
+                    "primary-container": "#4caf7d",
+                    "on-primary-fixed-variant": "#005232",
+                    "on-error": "#ffffff",
+                    "on-background": "#121c2a",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#ffdad8",
+                    "surface-variant": "#d9e3f6",
+                    "secondary-container": "#fea619",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-tertiary-fixed": "#410006",
+                    "on-tertiary-container": "#6d0714",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "tertiary-fixed-dim": "#ffb3b0",
+                    "primary-fixed-dim": "#77daa4",
+                    "on-primary-container": "#003d25",
+                    "surface": "#f8f9ff",
+                    "inverse-primary": "#77daa4",
+                    "surface-container-highest": "#d9e3f6",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Plus Jakarta Sans"],
+                    "label": ["Plus Jakarta Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .tonal-shift {
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bdcabf;
+            border-radius: 10px;
+        }
+    </style>
+   <link rel="stylesheet" href="/static/css/ngo-management.css"/>  
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+
+<!-- TopNavBar Anchor -->
+<header class="fixed top-0 left-0 right-0 h-16 flex justify-between items-center px-8 w-full z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+    <div class="flex items-center gap-4">
+        <div class="w-10 h-10 bg-gradient-to-br from-[#006c44] to-emerald-700 rounded-xl flex items-center justify-center shadow-emerald-200 shadow-lg">
+            <span class="material-symbols-outlined text-white">handshake</span>
+        </div>
+        <div class="flex flex-col">
+            <h1 class="text-xl font-black tracking-tight text-slate-800 leading-none">
+                Seva<span class="text-primary">Setu</span>
+            </h1>
+            <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Admin Intelligence</span>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-6">
+        <div class="hidden sm:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-[11px] font-bold text-slate-600 uppercase">System Active</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button class="p-2 text-slate-400 hover:text-primary transition-all relative">
+                <span class="material-symbols-outlined">notifications</span>
+                <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+            </button>
+            <div class="h-8 w-[1px] bg-slate-200 mx-2"></div>
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuC45bwaRYjVmvvYBFcbzctzQK1DRC0bs17OkpkeqFv9hAGzSyORirXDpib4XgfuwSJ4Zli2CSdOZ3drlT8dDJ0p9QG0SZ47NrPLWAs_QVCXVweCk8oLAOiMt4ADNwMO6XbprQw3UjmJXE2KiNaJFUzlCeYAclsaih19DqulwrL--uG_YctNrte2kwluO2J2BNlmpv6o2IJzQgqybNjM0HmQ1Ud4-rqrkqaWwlFfNoSEpcZ0D3yWvkAWDlHOdF94N0-NcXdI-Wi3fc-M" class="w-9 h-9 rounded-full ring-2 ring-emerald-50 group-hover:ring-emerald-200 transition-all shadow-sm" alt="Admin">
+                <div class="hidden lg:block">
+                    <p class="text-xs font-bold text-slate-700">Administrator</p>
+                    <p class="text-[10px] text-slate-400">Master Access</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+<!-- Main Content Canvas -->
+<!-- Main Content Canvas -->
+<main class="pt-16 h-screen flex bg-[#f8fafc]"> <div class="flex w-full items-stretch">
+
+
+
+        <div id="tableSection" class="flex-1 w-full h-full overflow-auto transition-all duration-300 px-8 py-6">
+
+            
+
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+
+                <div>
+
+                    <nav class="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">
+
+                        <span class="text-emerald-600">SevaSetu</span> <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+
+                        <span class="text-emerald-400">Admin Portal</span> <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+
+                        <span class="text-primary">NGO Management</span>
+
+                    </nav>
+
+                    
+
+                    <h1 class="text-4xl font-black tracking-tight text-slate-800 mb-3">
+
+                        NGO Management
+
+                    </h1>
+
+                    
+
+                    <div class="flex flex-wrap gap-3">
+
+                        <span class="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm text-sm font-semibold text-slate-600">
+
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+
+                            <span id="activeCount" class="text-slate-900">0</span> Active NGOs
+
+                        </span>
+
+
+
+                        <span class="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-100 rounded-lg text-[11px] font-bold uppercase tracking-wider">
+
+                            <span id="pendingCount">0</span> Pending
+
+                        </span>
+
+
+
+                        <span class="px-3 py-1.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-lg text-[11px] font-bold uppercase tracking-wider">
+
+                            <span id="regionCount">0</span> Regions
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+
+                <div class="flex items-center gap-3">
+
+                    <button id="exportBtn" class="px-6 py-3 bg-white text-slate-700 font-bold rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow transition-all flex items-center gap-2 active:scale-95">
+
+                        <span class="material-symbols-outlined text-[20px]">file_download</span>
+
+                        Export Data
+
+                    </button>
+
+                    <button id="addNgoBtn" class="px-8 py-3 bg-emerald-900 text-white font-bold rounded-xl shadow-lg shadow-emerald-900/20 hover:bg-emerald-800 hover:-translate-y-0.5 transition-all flex items-center gap-2 active:scale-95">
+    <span class="material-symbols-outlined text-[20px]">add_circle</span>
+    Register New NGO
+</button>
+                </div>
+
+            </div>
+
+
+<!-- Filter Bar -->
+<div class="bg-surface-container-low p-4 rounded-xl flex flex-wrap items-center gap-4 mb-8">
+<div class="flex-1 min-w-[240px] relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant">search</span>
+<input id="ngoSearch" class="w-full bg-white border-none rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20" placeholder="Filter by name, ID or impact area..." type="text"/>
+</div>
+<select id="statusFilter" class="bg-white border-none rounded-lg py-2.5 px-4 text-sm text-on-surface-variant focus:ring-2 focus:ring-primary/20 min-w-[140px]">
+<option>All Statuses</option>
+<option>Verified</option>
+<option>Pending</option>
+<option>Suspended</option>
+</select>
+
+<div class="h-8 w-[1px] bg-outline-variant/30 hidden sm:block"></div>
+
+</div>
+<!-- Management Table -->
+<div class="bg-white rounded-lg shadow-[0_20px_40px_rgba(0,108,68,0.04)] overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-lowest border-b border-surface-container-high">
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Organization &amp; Location</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Primary Email</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Impact Needs</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Matches</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Joined</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Status</th>
+<th class="px-6 py-4 text-[11px] font-bold text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody id="ngoTableBody" class="divide-y divide-surface-container-low">
+<!-- Row 1 -->
+<!-- Skeleton Row -->
+<tr>
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl skeleton"></div>
+<div class="space-y-2 w-full">
+<div class="h-3 w-40 skeleton rounded"></div>
+<div class="h-2 w-24 skeleton rounded"></div>
+</div>
+</div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-40 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5 text-center">
+<div class="h-6 w-6 skeleton rounded-full mx-auto"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-20 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2">
+<div class="w-8 h-8 skeleton rounded-full"></div>
+<div class="w-8 h-8 skeleton rounded-full"></div>
+</div>
+</td>
+</tr>
+
+<!-- Row 2 -->
+<!-- Skeleton Row -->
+<tr>
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl skeleton"></div>
+<div class="space-y-2 w-full">
+<div class="h-3 w-40 skeleton rounded"></div>
+<div class="h-2 w-24 skeleton rounded"></div>
+</div>
+</div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-40 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5 text-center">
+<div class="h-6 w-6 skeleton rounded-full mx-auto"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-20 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2">
+<div class="w-8 h-8 skeleton rounded-full"></div>
+<div class="w-8 h-8 skeleton rounded-full"></div>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<!-- Skeleton Row -->
+<tr>
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl skeleton"></div>
+<div class="space-y-2 w-full">
+<div class="h-3 w-40 skeleton rounded"></div>
+<div class="h-2 w-24 skeleton rounded"></div>
+</div>
+</div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-40 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5 text-center">
+<div class="h-6 w-6 skeleton rounded-full mx-auto"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-20 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2">
+<div class="w-8 h-8 skeleton rounded-full"></div>
+<div class="w-8 h-8 skeleton rounded-full"></div>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<!-- Skeleton Row -->
+<tr>
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-2xl skeleton"></div>
+<div class="space-y-2 w-full">
+<div class="h-3 w-40 skeleton rounded"></div>
+<div class="h-2 w-24 skeleton rounded"></div>
+</div>
+</div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-40 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5 text-center">
+<div class="h-6 w-6 skeleton rounded-full mx-auto"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-24 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="h-3 w-20 skeleton rounded"></div>
+</td>
+
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2">
+<div class="w-8 h-8 skeleton rounded-full"></div>
+<div class="w-8 h-8 skeleton rounded-full"></div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+ <div class="px-6 py-4 bg-slate-50/50 flex items-center justify-between border-t border-slate-100">
+                    <p id="paginationInfo" class="text-xs font-bold text-slate-400 uppercase"></p>
+                    <div id="pagination" class="flex items-center gap-1">
+                        <button id="prevPageBtn" class="p-1.5 rounded-lg hover:bg-white text-slate-400 transition-all"><span class="material-symbols-outlined">chevron_left</span></button>
+                        <button id="nextPageBtn" class="p-1.5 rounded-lg hover:bg-white text-slate-400 transition-all"><span class="material-symbols-outlined">chevron_right</span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+<!-- Detail Side Panel -->
+<aside id="detailsPanel" class="hidden w-[30%] h-full bg-white border-l flex-col transition-all duration-300">
+    <!-- HEADER -->
+    <div class="p-6 border-b border-surface-container-low flex justify-between items-center">
+        <button id="closeDetailsBtn" class="p-2 hover:bg-surface-container rounded-full">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+
+        <div class="flex gap-2">
+            <button id="editBtn" class="px-4 py-2 rounded-full border text-sm font-bold">
+                Edit
+            </button>
+            <button id="suspendBtn" class="px-4 py-2 rounded-full border border-red-500 text-red-500 text-sm font-bold">
+                Suspend
+            </button>
+        </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+
+        <!-- PROFILE -->
+        <div class="flex flex-col items-center text-center mb-6">
+            <img id="ngoLogo" class="w-24 h-24 rounded-xl object-cover mb-3" src="https://via.placeholder.com/100" />
+
+            <h3 id="ngoName" class="text-lg font-bold">NGO Name</h3>
+            <p id="ngoEmail" class="text-sm text-gray-500">email@ngo.com</p>
+            <p id="ngoCity" class="text-xs text-gray-400">City</p>
+        </div>
+
+        <!-- STATS -->
+        <div class="grid grid-cols-3 gap-3 mb-6 text-center">
+            <div class="bg-gray-100 p-3 rounded-lg">
+                <p class="text-xs">Needs</p>
+                <p id="ngoNeeds" class="font-bold">0</p>
+            </div>
+            <div class="bg-gray-100 p-3 rounded-lg">
+                <p class="text-xs">Matches</p>
+                <p id="ngoMatches" class="font-bold">0</p>
+            </div>
+            <div class="bg-gray-100 p-3 rounded-lg">
+                <p class="text-xs">Joined</p>
+                <p id="ngoJoined" class="text-sm font-bold">--</p>
+            </div>
+        </div>
+
+        <!-- STATUS -->
+        <div class="mb-6">
+            <p class="text-xs text-gray-500">Status</p>
+            <p id="ngoStatus" class="font-semibold">--</p>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="mb-6">
+            <p class="text-xs font-bold mb-2">Description</p>
+            <p id="ngoDescription" class="text-sm text-gray-600">
+                NGO description here...
+            </p>
+        </div>
+
+        <!-- CONTACT -->
+        <div class="mb-6">
+            <p class="text-xs font-bold mb-2">Contact Details</p>
+
+            <p id="ngoEmail2" class="text-sm">📧 email@ngo.com</p>
+            <p id="ngoPhone" class="text-sm">📞 +91 XXXXXXXX</p>
+            <p id="ngoWebsite" class="text-sm">🌐 website.com</p>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="p-6 border-t">
+        <button id="verifyBtn" class="w-full bg-green-600 text-white py-3 rounded-full font-bold">
+            Verify NGO Documents
+        </button>
+    </div>
+
+</aside>
+</main>
+
+<!-- REGISTER NGO MODAL -->
+<div id="ngoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+
+  <div class="bg-white w-full max-w-[650px] max-h-[95vh] overflow-y-auto rounded-2xl shadow-2xl border border-emerald-100">
+
+    <div class="sticky top-0 bg-white/95 backdrop-blur-md px-8 py-6 border-b border-emerald-50 flex justify-between items-center z-10">
+      <div class="flex items-center gap-3">
+        <div class="bg-emerald-100 p-2 rounded-lg">
+          <span class="material-symbols-outlined text-emerald-700">domain_add</span>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-emerald-900 leading-tight">Register New NGO</h2>
+          <p class="text-sm text-emerald-600 font-medium">Join our network of change-makers</p>
+        </div>
+      </div>
+      <button id="closeModalBtn" class="p-2 hover:bg-emerald-50 rounded-full transition-colors text-emerald-800">
+        <span class="material-symbols-outlined text-2xl">close</span>
+      </button>
+    </div>
+
+    <form id="ngoForm" class="p-8 space-y-6">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-1.5">
+          <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">corporate_fare</span> NGO Name
+          </label>
+          <input type="text" id="formName" placeholder="Organization Legal Name" 
+            class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:text-emerald-200" required>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">mail</span> Email Address
+          </label>
+          <input type="email" id="formEmail" placeholder="contact@ngo.org"
+            class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" required>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-1.5">
+          <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">call</span> Phone Number
+          </label>
+          <input type="text" id="formPhone" placeholder="+1 (555) 000-0000"
+            class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">location_on</span> Operating City
+          </label>
+          <input type="text" id="formCity" placeholder="City, Country"
+            class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-1.5">
+          <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">category</span> Category
+          </label>
+          <select id="formCategory" class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all appearance-none cursor-pointer">
+            <option value="" disabled selected>Select focus area</option>
+            <option>Education</option>
+            <option>Healthcare</option>
+            <option>Environment</option>
+            <option>Women Empowerment</option>
+            <option>Child Welfare</option>
+          </select>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">language</span> Website
+          </label>
+          <input type="text" id="formWebsite" placeholder="https://..."
+            class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all">
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="text-xs uppercase tracking-wider font-bold text-emerald-700 flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">description</span> NGO Description
+        </label>
+        <textarea id="formDescription" rows="3" placeholder="Tell us about your mission..." 
+          class="w-full border-emerald-100 bg-emerald-50/30 p-3 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none"></textarea>
+      </div>
+
+      <div class="bg-emerald-50/50 p-5 rounded-xl border border-dashed border-emerald-200 space-y-4">
+        <h3 class="text-sm font-bold text-emerald-800 flex items-center gap-2 mb-2">
+          <span class="material-symbols-outlined text-lg">cloud_upload</span> Verification Documents
+        </h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-emerald-600 uppercase">Organization Logo</label>
+            <input type="file" id="formLogo" class="block w-full text-sm text-emerald-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-xs file:font-semibold
+              file:bg-emerald-600 file:text-white
+              hover:file:bg-emerald-700 transition-all cursor-pointer">
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-emerald-600 uppercase">Registration Cert.</label>
+            <input type="file" id="formRegistrationDoc" class="block w-full text-sm text-emerald-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-xs file:font-semibold
+              file:bg-emerald-200 file:text-emerald-700
+              hover:file:bg-emerald-300 transition-all cursor-pointer">
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-bold text-emerald-600 uppercase">Tax Documents (80G/12A)</label>
+          <input type="file" id="formTaxDoc" class="block w-full text-sm text-emerald-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-xs file:font-semibold
+            file:bg-emerald-200 file:text-emerald-700
+            hover:file:bg-emerald-300 transition-all cursor-pointer">
+        </div>
+        
+        <p class="text-[10px] text-emerald-400 italic">
+          Accepted formats: PDF, JPG, PNG (Max 5MB per file)
+        </p>
+      </div>
+
+      <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-emerald-200 transition-all transform hover:-translate-y-0.5 active:scale-[0.98] flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">send</span>
+        Submit Application
+      </button>
+
+    </form>
+  </div>
+</div>
+<div id="verifyModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center z-50 transition-all duration-300">
+
+  <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden border border-slate-200 transform transition-all">
+
+    <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+      <div>
+        <h2 class="text-xl font-bold text-slate-800">Verify NGO Documents</h2>
+        <p class="text-xs text-slate-500 mt-1">Review the submitted legal documentation below.</p>
+      </div>
+      <button id="closeVerifyModal" class="p-2 hover:bg-slate-200 rounded-full text-slate-400 hover:text-slate-600 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="p-6">
+      <div class="grid grid-cols-2 gap-6">
+
+        <div class="group">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="p-1.5 bg-blue-50 text-blue-600 rounded-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <p class="text-sm font-bold text-slate-700 tracking-tight">Registration Certificate</p>
+          </div>
+          <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 ring-1 ring-slate-200 group-hover:ring-blue-400 transition-all">
+            <iframe id="regDocFrame" class="w-full h-56"></iframe>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p class="text-sm font-bold text-slate-700 tracking-tight">Tax Document</p>
+          </div>
+          <div class="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 ring-1 ring-slate-200 group-hover:ring-emerald-400 transition-all">
+            <iframe id="taxDocFrame" class="w-full h-56"></iframe>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 px-6 py-4 bg-slate-50 border-t border-slate-100">
+      <button id="rejectBtn" class="px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2">
+        <span>Suspend</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+      </button>
+
+      <button id="approveBtn" class="px-6 py-2.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-md shadow-green-200 rounded-lg transition-all transform active:scale-95 flex items-center gap-2">
+        <span>Approve NGO</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/ngo-management.js') }}"></script>
+</body></html>

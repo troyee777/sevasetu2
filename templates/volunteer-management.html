@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SevaSetu Admin - Volunteer Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#d0dbed",
+                    "on-error-container": "#93000a",
+                    "tertiary": "#a83639",
+                    "on-primary": "#ffffff",
+                    "on-primary-fixed": "#002112",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-surface": "#121c2a",
+                    "secondary-fixed": "#ffddb8",
+                    "error": "#ba1a1a",
+                    "primary": "#006c44",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "tertiary-container": "#fa7272",
+                    "surface-container": "#e6eeff",
+                    "background": "#f8f9ff",
+                    "outline": "#6e7a71",
+                    "on-surface-variant": "#3e4942",
+                    "primary-fixed": "#93f7bf",
+                    "on-secondary-container": "#684000",
+                    "surface-container-low": "#eff4ff",
+                    "secondary": "#855300",
+                    "surface-container-high": "#dee9fc",
+                    "outline-variant": "#bdcabf",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#881d24",
+                    "surface-bright": "#f8f9ff",
+                    "surface-tint": "#006c44",
+                    "inverse-surface": "#27313f",
+                    "primary-container": "#4caf7d",
+                    "on-primary-fixed-variant": "#005232",
+                    "on-error": "#ffffff",
+                    "on-background": "#121c2a",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#ffdad8",
+                    "surface-variant": "#d9e3f6",
+                    "secondary-container": "#fea619",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-tertiary-fixed": "#410006",
+                    "on-tertiary-container": "#6d0714",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "tertiary-fixed-dim": "#ffb3b0",
+                    "primary-fixed-dim": "#77daa4",
+                    "on-primary-container": "#003d25",
+                    "surface": "#f8f9ff",
+                    "inverse-primary": "#77daa4",
+                    "surface-container-highest": "#d9e3f6",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Plus Jakarta Sans"],
+                    "body": ["Plus Jakarta Sans"],
+                    "label": ["Plus Jakarta Sans"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .tonal-shift {
+            background: linear-gradient(135deg, #006c44 0%, #004d31 100%);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #bdcabf; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface">
+
+<!-- TopNavBar (Execution from JSON) -->
+<header class="fixed top-0 left-0 right-0 h-16 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md border-b border-gray-100 dark:border-slate-800 flex justify-between items-center px-8 w-full z-50 transition-all">
+    <div class="flex items-center gap-8">
+        <div class="flex flex-col">
+            <h1 class="text-2xl font-black tracking-tighter text-[#006c44]">SevaSetu</h1>
+            <span class="text-[10px] uppercase tracking-[0.2em] text-green-600 font-bold -mt-1">Admin Portal</span>
+        </div>
+    </div>
+    
+    <div class="flex items-center gap-4">
+        <div class="flex gap-1 bg-gray-100/50 p-1 rounded-full">
+            <button class="p-2 hover:bg-white hover:shadow-sm rounded-full transition-all text-gray-600">
+                <span class="material-symbols-outlined text-[20px]">notifications</span>
+            </button>
+            <button class="p-2 hover:bg-white hover:shadow-sm rounded-full transition-all text-gray-600">
+                <span class="material-symbols-outlined text-[20px]">help_outline</span>
+            </button>
+        </div>
+        <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
+            <div class="text-right hidden sm:block">
+                <p class="text-xs font-bold text-gray-800 leading-none">Admin User</p>
+                <p class="text-[10px] text-gray-400">Super Admin</p>
+            </div>
+            <div class="relative group cursor-pointer">
+                <img class="w-9 h-9 rounded-full border-2 border-green-500 p-0.5 object-cover shadow-sm transition-transform group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs02rlk-Q6_qPnwojQD8HS9XhYw4n8WDsnNkEIwBlAUGKdf6SSgqEWoZuts5pJcKTOm13bYCrYetd_i2nu5McHZzRPCkEMksJiYT4VrmqdKe-MwTym7gQ3V8icpw4qZeB0che7ysSVbYgh6mIpbsRcStMu3Se2ei5WqWHSSTOT_QGRoFrw3uGCQHLik2EGhcAwYY77w1wEikpFY-KLLF5U6yYDHp6bslXp_Fwrukv6Lp7XtCMCl9he76LHnVrtBjm4loQnKRXITLs2" alt="Admin Profile"/>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 min-h-screen bg-[#fcfdfe]">
+    <div class="max-w-[1400px] mx-auto p-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+            <div>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="h-1 w-8 bg-green-500 rounded-full"></span>
+                     <p class="text-label-sm font-bold tracking-widest text-primary uppercase mb-2">
+            COMMUNITY NETWORK
+        </p>
+                </div>
+                <h2 class="text-5xl font-black text-slate-900 tracking-tight">
+                    Volunteer <span class="text-green-700">Directory</span>
+                </h2>
+            </div>
+
+            <div class="flex items-center gap-3 bg-white border border-yellow-100 px-5 py-3 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-yellow-400/20 p-2 rounded-lg">
+                    <span class="material-symbols-outlined text-yellow-700 text-lg">pending_actions</span>
+                </div>
+                <div>
+                    <p class="text-[10px] uppercase font-bold text-gray-400 leading-none mb-1">Pending Approval</p>
+                    <span id="pendingCount" class="text-xl font-black text-slate-800">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 bg-white shadow-sm border border-gray-100 p-6 rounded-3xl">
+            <div class="relative flex items-center">
+                <span class="material-symbols-outlined absolute left-3 text-gray-400 text-lg">search</span>
+                <input id="searchInput" placeholder="Search by name, skill,location..." 
+                       class="w-full bg-gray-50 border-none focus:ring-2 focus:ring-green-500/20 p-3 pl-10 rounded-xl text-sm transition-all outline-none" />
+            </div>
+
+            <select id="skillFilter" class="bg-gray-50 border-none focus:ring-2 focus:ring-green-500/20 p-3 rounded-xl text-sm outline-none cursor-pointer">
+                <option value="All Skills">All Skills</option>
+                <option value="Education">Education</option>
+                <option value="Medical">Medical</option>
+                <option value="Logistics">Logistics</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <input id="customSkillInput" placeholder="Enter custom skill..." 
+                   class="hidden bg-gray-50 border-none focus:ring-2 focus:ring-green-500/20 p-3 rounded-xl text-sm outline-none" />
+
+            <select id="availabilityFilter" class="bg-gray-50 border-none focus:ring-2 focus:ring-green-500/20 p-3 rounded-xl text-sm outline-none cursor-pointer">
+                <option value="All">All Availability</option>
+                <option value="Any Time">Any Time</option>
+                <option value="Weekdays">Weekdays</option>
+                <option value="Weekends">Weekends</option>
+            </select>
+
+            <select id="statusFilter" class="bg-gray-50 border-none focus:ring-2 focus:ring-green-500/20 p-3 rounded-xl text-sm outline-none cursor-pointer">
+                <option value="All">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+            </select>
+        </div>
+
+        <div id="volunteerContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+
+        <aside id="detailsPanel" class="hidden fixed top-4 right-4 bottom-4 w-[380px] bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-[60] flex flex-col overflow-hidden border border-gray-100">
+            <div class="h-32 bg-gradient-to-br from-green-600 to-emerald-800 relative">
+                <button id="closeDetailsBtn" class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-all">
+                    <span class="material-symbols-outlined text-xl">close</span>
+                </button>
+            </div>
+
+            <div class="px-8 pb-8 -mt-12 flex-1 flex flex-col">
+                <div class="flex flex-col items-center text-center mb-8">
+                    <div class="relative">
+                        <img id="volImage" class="w-28 h-28 rounded-3xl object-cover border-4 border-white shadow-xl mb-4 rotate-2 hover:rotate-0 transition-transform duration-300" src="images/avatar.png" />
+                        <span class="absolute bottom-6 right-0 w-5 h-5 bg-green-500 border-4 border-white rounded-full"></span>
+                    </div>
+                    <h3 id="volName" class="text-2xl font-black text-slate-800"></h3>
+                    <div class="flex flex-col gap-1 mt-1">
+                        <p id="volEmail" class="text-sm text-gray-500 font-medium"></p>
+                        <p id="volPhone" class="text-sm text-gray-400"></p>
+                        <p id="volJoined" class="text-sm text-gray-400 mt-2"></p>
+
+                    </div>
+                    <div class="mt-3 inline-flex items-center gap-1 bg-gray-100 px-3 py-1 rounded-full">
+                         <span class="material-symbols-outlined text-[14px] text-gray-500">location_on</span>
+                         <span id="volCity" class="text-xs font-bold text-gray-500"></span>
+                    </div>
+                </div>
+
+                <div class="space-y-6 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <div class="bg-gray-50/50 border border-gray-100 p-5 rounded-2xl">
+                        <h4 class="text-[10px] font-black text-gray-400 mb-4 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-2 h-2 bg-green-500 rounded-full"></span> Expertise & Skills
+                        </h4>
+                        <div id="volSkills" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <div class="pt-6 mt-6 border-t border-gray-100 flex flex-col gap-3">
+                    <button id="assignBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-4 rounded-2xl font-bold text-sm shadow-lg shadow-slate-200 transition-all active:scale-[0.98]">
+                        Assign Task
+                    </button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="approveBtn" class="bg-green-50 hover:bg-green-100 text-green-700 py-3 rounded-2xl font-bold text-sm transition-all">
+                            Approve
+                        </button>
+                        <button id="suspendBtn" class="bg-red-50 hover:bg-red-100 text-red-600 py-3 rounded-2xl font-bold text-sm transition-all">
+                            Suspend
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</main>
+<script src="{{ url_for('static', filename='js/volunteer-management.js') }}"></script>
+<!-- FAB Suppression Rule Active -->
+</body></html>
