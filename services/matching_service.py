@@ -122,8 +122,9 @@ def run_matching_for_need(need_id: str, need: dict) -> list[str]:
 
     # Sort by AI score, take top N
     scored.sort(key=lambda v: v["_ai_score"], reverse=True)
-    final = scored[:MAX_MATCHES_PER_NEED]
-
+    
+    # Filter out irrelevant matches (score <= 10)
+    final = [v for v in scored if v["_ai_score"] > 10][:MAX_MATCHES_PER_NEED]
     # ── 5. Write match documents ──────────────────────────────────────────────
     match_ids = _write_matches(db, need_id, need, final)
 

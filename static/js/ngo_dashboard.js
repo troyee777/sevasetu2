@@ -740,32 +740,32 @@ window.openManual = function() {
 function showSkeletons() {
   ["statOpenNeeds","statAssignedNeeds","statCompleted","statVolunteers"].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.textContent = "—"; el.classList.add("animate-pulse"); }
+    if (el) { el.textContent = "—"; el.classList.add("skeleton"); }
   });
 
   const needsContainer = document.getElementById("recentNeedsContainer");
   if (needsContainer) {
     needsContainer.innerHTML = [1,2,3].map(() => `
-      <div class="p-8 flex items-center justify-between">
+      <div class="p-8 flex items-center justify-between" style="pointer-events:none;">
         <div class="flex items-center gap-6 flex-1">
-          <div class="w-2 h-12 bg-surface-container-high rounded-full animate-pulse"></div>
+          <div class="w-2 h-12 skeleton rounded-full"></div>
           <div class="space-y-2 flex-1">
-            <div class="h-4 bg-surface-container-high rounded animate-pulse w-2/3"></div>
-            <div class="h-3 bg-surface-container-high rounded animate-pulse w-1/3"></div>
+            <div class="h-4 skeleton rounded w-2/3"></div>
+            <div class="h-3 skeleton rounded w-1/3"></div>
           </div>
         </div>
-        <div class="h-8 w-16 bg-surface-container-high rounded-full animate-pulse ml-4"></div>
+        <div class="h-8 w-16 skeleton rounded-full ml-4"></div>
       </div>`).join('<hr class="border-surface-container"/>');
   }
 
   const matchesContainer = document.getElementById("matchesContainer");
   if (matchesContainer) {
     matchesContainer.innerHTML = [1,2].map(() => `
-      <div class="flex items-center gap-4">
-        <div class="w-14 h-14 rounded-full bg-surface-container-high animate-pulse flex-shrink-0"></div>
+      <div class="flex items-center gap-4" style="pointer-events:none;">
+        <div class="w-14 h-14 rounded-full skeleton flex-shrink-0"></div>
         <div class="space-y-2 flex-1">
-          <div class="h-4 bg-surface-container-high rounded animate-pulse w-1/2"></div>
-          <div class="h-3 bg-surface-container-high rounded animate-pulse w-1/3"></div>
+          <div class="h-4 skeleton rounded w-1/2"></div>
+          <div class="h-3 skeleton rounded w-1/3"></div>
         </div>
       </div>`).join("<hr class='border-surface-container my-6'/>");
   }

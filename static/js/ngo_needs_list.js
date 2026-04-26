@@ -584,8 +584,14 @@ function timeAgo(timestamp) {
   let date;
   if (timestamp._seconds)           date = new Date(timestamp._seconds * 1000);
   else if (typeof timestamp === 'string') date = new Date(timestamp);
-  else if (typeof timestamp === 'number') date = new Date(timestamp);
+  else if (typeof timestamp === 'number') {
+    // If timestamp is less than 10 billion, it's likely in seconds, so convert to ms.
+    date = new Date(timestamp < 10000000000 ? timestamp * 1000 : timestamp);
+  }
   else return 'just now';
+  
+  if (isNaN(date.getTime())) return 'just now';
+  
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (seconds < 60)    return 'just now';
   if (seconds < 3600)  return `${Math.floor(seconds / 60)}m ago`;
