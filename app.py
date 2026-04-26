@@ -66,6 +66,14 @@ def need_details(need_id, role):
     need = firebase_services.get_need_by_id(need_id)
     if not need:
         return "Need not found", 404
+
+    # Check if NGO is verified
+    ngo_id = need.get("ngo_id")
+    if ngo_id:
+        ngo_profile = firebase_services.get_ngo_profile(ngo_id)
+        need["ngo_verified"] = ngo_profile.get("verified", False)
+    else:
+        need["ngo_verified"] = False
         
     return render_template("ngo&volunteerdetails.html", 
                            need=need, 
@@ -768,6 +776,8 @@ def firebase_login():
         return jsonify({"status": "existing", "redirect": "/ngo/dashboard"})
     elif role == "volunteer":
         return jsonify({"status": "existing", "redirect": "/volunteer/dashboard"})
+    elif role == "admin":
+        return jsonify({"status": "existing", "redirect": "/admin/dashboard"})
     else:
         return jsonify({"status": "existing", "redirect": "/select-role"})
 
@@ -1033,6 +1043,13 @@ def api_need_detail(need_id):
                 "rating":    vol.get("rating", 0),
                 "phone":     vol.get("phone", ""),
             }
+
+    ngo_id = need.get("ngo_id")
+    if ngo_id:
+        ngo_profile = firebase_services.get_ngo_profile(ngo_id)
+        need["ngo_verified"] = ngo_profile.get("verified", False)
+    else:
+        need["ngo_verified"] = False
 
     return jsonify({
         "need":               need,
