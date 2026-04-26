@@ -3,866 +3,348 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SevaSetu Admin Dashboard</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <title>SevaSetu — Admin Dashboard</title>
+ 
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
   <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_dashboard.css') }}"/>
 </head>
 <body>
-
-<!-- ══════════════════════════════════════════════════════════
-     MODAL 1 — NGO LIST POPUP
-     Opens when "View All" is clicked on "Recently Registered NGOs"
-     Shows skeleton rows first, then reveals the full table.
-══════════════════════════════════════════════════════════ -->
-<div id="ngo-list-modal" class="modal-backdrop" onclick="closeOnBackdrop(event,'ngo-list-modal')">
-  <div class="modal-box">
-
-    <!-- Sticky header -->
-    <div class="modal-head">
-      <div>
-        <div class="modal-title">Recently Registered NGOs</div>
-        <div class="modal-subtitle">All organisations that joined the platform</div>
-      </div>
-      <button class="modal-close" id="close-ngo-modal" aria-label="Close">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-
-    <!-- Scrollable body -->
-    <div class="modal-body">
-
-      <!--
-        .modal-wrap starts as .loading — skeleton visible, real content hidden.
-        JS switches it to .loaded after MODAL_SKELETON_DELAY ms.
-      -->
-      <div class="modal-wrap loading" id="ngo-modal-wrap">
-
-        <!-- SKELETON ROWS (shown while loading) -->
-        <div class="modal-skeleton">
-          <!-- 6 skeleton rows mimicking table rows -->
-          <div class="modal-skel-row">
-            <div class="skel skel-circ" style="width:32px;height:32px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-              <div class="skel skel-md" style="width:55%;"></div>
-              <div class="skel skel-sm" style="width:35%;"></div>
-            </div>
-            <div class="skel skel-pill" style="width:80px;height:22px;"></div>
-            <div class="skel skel-pill" style="width:60px;height:28px;"></div>
-          </div>
-          <div class="modal-skel-row">
-            <div class="skel skel-circ" style="width:32px;height:32px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-              <div class="skel skel-md" style="width:45%;"></div>
-              <div class="skel skel-sm" style="width:30%;"></div>
-            </div>
-            <div class="skel skel-pill" style="width:80px;height:22px;"></div>
-            <div class="skel skel-pill" style="width:60px;height:28px;"></div>
-          </div>
-          <div class="modal-skel-row">
-            <div class="skel skel-circ" style="width:32px;height:32px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-              <div class="skel skel-md" style="width:60%;"></div>
-              <div class="skel skel-sm" style="width:38%;"></div>
-            </div>
-            <div class="skel skel-pill" style="width:80px;height:22px;"></div>
-            <div class="skel skel-pill" style="width:60px;height:28px;"></div>
-          </div>
-          <div class="modal-skel-row">
-            <div class="skel skel-circ" style="width:32px;height:32px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-              <div class="skel skel-md" style="width:50%;"></div>
-              <div class="skel skel-sm" style="width:40%;"></div>
-            </div>
-            <div class="skel skel-pill" style="width:80px;height:22px;"></div>
-            <div class="skel skel-pill" style="width:60px;height:28px;"></div>
-          </div>
-          <div class="modal-skel-row">
-            <div class="skel skel-circ" style="width:32px;height:32px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-              <div class="skel skel-md" style="width:42%;"></div>
-              <div class="skel skel-sm" style="width:28%;"></div>
-            </div>
-            <div class="skel skel-pill" style="width:80px;height:22px;"></div>
-            <div class="skel skel-pill" style="width:60px;height:28px;"></div>
-          </div>
-          <div class="modal-skel-row" style="border-bottom:none;">
-            <div class="skel skel-circ" style="width:32px;height:32px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-              <div class="skel skel-md" style="width:58%;"></div>
-              <div class="skel skel-sm" style="width:33%;"></div>
-            </div>
-            <div class="skel skel-pill" style="width:80px;height:22px;"></div>
-            <div class="skel skel-pill" style="width:60px;height:28px;"></div>
-          </div>
-        </div>
-
-        <!-- REAL CONTENT (hidden until loaded) -->
-        <div class="modal-content">
-          <table class="modal-table">
-            <thead>
-              <tr>
-                <th>Organisation</th>
-                <th>Location</th>
-                <th>Joined</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#d1fae5;color:#006c44;">GR</div>
-                    <span class="ngo-name">GreenRoots Foundation</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Mumbai, India</td>
-                <td class="ngo-meta">Oct 12, 2023</td>
-                <td><span class="status-pill s-v"><span class="dot"></span><span class="lbl">Verified</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#fef3c7;color:#855300;">SH</div>
-                    <span class="ngo-name">Sahaya Hands</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Bengaluru, India</td>
-                <td class="ngo-meta">Oct 11, 2023</td>
-                <td><span class="status-pill s-p"><span class="dot"></span><span class="lbl">Pending</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#fde8e8;color:#a83639;">EJ</div>
-                    <span class="ngo-name">EduJoy Trust</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Delhi, India</td>
-                <td class="ngo-meta">Oct 10, 2023</td>
-                <td><span class="status-pill s-v"><span class="dot"></span><span class="lbl">Verified</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#d1fae5;color:#006c44;">HF</div>
-                    <span class="ngo-name">HealthFirst India</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Chennai, India</td>
-                <td class="ngo-meta">Oct 9, 2023</td>
-                <td><span class="status-pill s-p"><span class="dot"></span><span class="lbl">Pending</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#fef3c7;color:#855300;">RC</div>
-                    <span class="ngo-name">Rural Connect NGO</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Jaipur, India</td>
-                <td class="ngo-meta">Oct 8, 2023</td>
-                <td><span class="status-pill s-v"><span class="dot"></span><span class="lbl">Verified</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#fde8e8;color:#a83639;">AS</div>
-                    <span class="ngo-name">Asha Sangam</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Hyderabad, India</td>
-                <td class="ngo-meta">Oct 7, 2023</td>
-                <td><span class="status-pill s-r"><span class="dot"></span><span class="lbl">Rejected</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#d1fae5;color:#006c44;">KS</div>
-                    <span class="ngo-name">Kiran Seva Trust</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Pune, India</td>
-                <td class="ngo-meta">Oct 6, 2023</td>
-                <td><span class="status-pill s-v"><span class="dot"></span><span class="lbl">Verified</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ngo-avatar" style="background:#fef3c7;color:#855300;">UF</div>
-                    <span class="ngo-name">Udaan Foundation</span>
-                  </div>
-                </td>
-                <td class="ngo-meta">Kolkata, India</td>
-                <td class="ngo-meta">Oct 5, 2023</td>
-                <td><span class="status-pill s-p"><span class="dot"></span><span class="lbl">Pending</span></span></td>
-                <td style="text-align:right;"><button class="review-btn">Review</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
-    </div>
+ 
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="material-symbols-outlined">eco</span>
   </div>
-</div>
-
-
-<!-- ══════════════════════════════════════════════════════════
-     MODAL 2 — VERIFICATION QUEUE POPUP
-     Opens when "View All" is clicked on "NGO Verification Queue"
-     Shows skeleton cards first, then reveals real verify/reject cards.
-══════════════════════════════════════════════════════════ -->
-<div id="verif-modal" class="modal-backdrop" onclick="closeOnBackdrop(event,'verif-modal')">
-  <div class="modal-box">
-
-    <div class="modal-head">
-      <div>
-        <div class="modal-title">NGO Verification Queue</div>
-        <div class="modal-subtitle">All NGOs awaiting admin review</div>
-      </div>
-      <button class="modal-close" id="close-verif-modal" aria-label="Close">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-
-    <div class="modal-body">
-      <div class="modal-wrap loading" id="verif-modal-wrap">
-
-        <!-- SKELETON CARDS -->
-        <div class="modal-skeleton">
-          <!-- 5 skeleton cards mimicking verif-card layout -->
-          <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-            <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-              <div class="skel skel-md" style="width:55%;"></div>
-              <div class="skel skel-sm" style="width:40%;"></div>
-              <div style="display:flex;gap:6px;margin-top:2px;">
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-              </div>
-            </div>
-          </div>
-          <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-            <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-              <div class="skel skel-md" style="width:48%;"></div>
-              <div class="skel skel-sm" style="width:35%;"></div>
-              <div style="display:flex;gap:6px;margin-top:2px;">
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-              </div>
-            </div>
-          </div>
-          <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-            <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-              <div class="skel skel-md" style="width:62%;"></div>
-              <div class="skel skel-sm" style="width:42%;"></div>
-              <div style="display:flex;gap:6px;margin-top:2px;">
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-              </div>
-            </div>
-          </div>
-          <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-            <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-              <div class="skel skel-md" style="width:44%;"></div>
-              <div class="skel skel-sm" style="width:38%;"></div>
-              <div style="display:flex;gap:6px;margin-top:2px;">
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-              </div>
-            </div>
-          </div>
-          <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-            <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-            <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-              <div class="skel skel-md" style="width:52%;"></div>
-              <div class="skel skel-sm" style="width:36%;"></div>
-              <div style="display:flex;gap:6px;margin-top:2px;">
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-                <div class="skel skel-pill" style="height:30px;flex:1;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- REAL VERIF CARDS -->
-        <div class="modal-content">
-          <div class="modal-verif-grid">
-
-            <div class="verif-card">
-              <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8yxrXpGvQWHpfJGZXQNPwwwc-MEyHHtKXuq_nRV37CnmuMkO9szxQm2gWtfNtdYJo_jkqQ-ffnXnG439aNVtgaioNZbWbQ_u-kd3ygVpON19ZWn6tgWJOPL5Y9dwfvN-sWuPGIwWUqcL8UMeKSXKeGRu-TL1oBIWnhem-s3B0cXWSoBrhoCiOlPoJM-25CcWgFEorBJ-tQfcRbX5iIJtKtaJpUI5Ci3Fz2KUAiHuU69OoN6EELBVgX59IxyPbVMH9JRTa3tl7UIPV" alt="Future Stars Education"/>
-              <div style="flex:1;">
-                <div class="verif-name">Future Stars Education</div>
-                <div class="verif-meta">Est. 2015 · Focus: Children</div>
-                <div class="verif-btns">
-                  <button class="btn-verify">Verify</button>
-                  <button class="btn-reject">Reject</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="verif-card">
-              <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv0iXUp24lmSmanR4WvcatuuNIixseRzGnig2G0U-fIFdPqibO6IgrfBmWZJuIDbK87nhL7wgr2Uq0NmYIEYeZXh29CApBuCqcZZczb_LpdK7VpCwrcrC3_wTwIX6LnpzEUXuxDM03ftwK8eeTXuEE7W6RsusydsELeHCqgDmuKHcAX9qi5uKR5c7JMhpCH10m0gJ3Ny_eC6P4EIPLc1zI0oeGv-JFaJDSC0KM4--vyhw3Wb8GYP33z_uGOVX2jF3MYHxqX1_E3SDV" alt="Anna Seva Kitchens"/>
-              <div style="flex:1;">
-                <div class="verif-name">Anna Seva Kitchens</div>
-                <div class="verif-meta">Est. 2021 · Focus: Food Relief</div>
-                <div class="verif-btns">
-                  <button class="btn-verify">Verify</button>
-                  <button class="btn-reject">Reject</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="verif-card">
-              <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVVNKT56B0am769mE3j0RdmIeXMU-h4nkAhLzQKYouJ9gDzs5RXR3WjCqgMNRspDGHfCoD5ibtKyw2NCfj9m3aom5YJMg9UgC5XCzEKRul-wbMABVpaUSc43JycLp54vVtd9hY2HPUn0noimZLLJkb80dXiwPl-fQGAjYPX6xgyqKVW8SFj5hdjYLfeSwG6CoIJnSYvdl9xeWkTtr4dSbQxTz7d14pCri-ZkVBQkinNBI0fZgQRz8LG3o_0eM7_d-FYesAplLYM9k3" alt="HealthGuard India"/>
-              <div style="flex:1;">
-                <div class="verif-name">HealthGuard India</div>
-                <div class="verif-meta">Est. 2018 · Focus: Medical</div>
-                <div class="verif-btns">
-                  <button class="btn-verify">Verify</button>
-                  <button class="btn-reject">Reject</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="verif-card">
-              <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8yxrXpGvQWHpfJGZXQNPwwwc-MEyHHtKXuq_nRV37CnmuMkO9szxQm2gWtfNtdYJo_jkqQ-ffnXnG439aNVtgaioNZbWbQ_u-kd3ygVpON19ZWn6tgWJOPL5Y9dwfvN-sWuPGIwWUqcL8UMeKSXKeGRu-TL1oBIWnhem-s3B0cXWSoBrhoCiOlPoJM-25CcWgFEorBJ-tQfcRbX5iIJtKtaJpUI5Ci3Fz2KUAiHuU69OoN6EELBVgX59IxyPbVMH9JRTa3tl7UIPV" alt="Shiksha Shakti"/>
-              <div style="flex:1;">
-                <div class="verif-name">Shiksha Shakti Foundation</div>
-                <div class="verif-meta">Est. 2019 · Focus: Education</div>
-                <div class="verif-btns">
-                  <button class="btn-verify">Verify</button>
-                  <button class="btn-reject">Reject</button>
-                </div>
-              </div>
-            </div>
-
-            <div class="verif-card">
-              <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv0iXUp24lmSmanR4WvcatuuNIixseRzGnig2G0U-fIFdPqibO6IgrfBmWZJuIDbK87nhL7wgr2Uq0NmYIEYeZXh29CApBuCqcZZczb_LpdK7VpCwrcrC3_wTwIX6LnpzEUXuxDM03ftwK8eeTXuEE7W6RsusydsELeHCqgDmuKHcAX9qi5uKR5c7JMhpCH10m0gJ3Ny_eC6P4EIPLc1zI0oeGv-JFaJDSC0KM4--vyhw3Wb8GYP33z_uGOVX2jF3MYHxqX1_E3SDV" alt="Jal Jeevan Trust"/>
-              <div style="flex:1;">
-                <div class="verif-name">Jal Jeevan Trust</div>
-                <div class="verif-meta">Est. 2022 · Focus: Water</div>
-                <div class="verif-btns">
-                  <button class="btn-verify">Verify</button>
-                  <button class="btn-reject">Reject</button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-    </div>
+  <button class="sidebar-btn active" title="Dashboard">
+    <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">dashboard</span>
+  </button>
+  <button class="sidebar-btn" title="NGOs">
+    <span class="material-symbols-outlined">apartment</span>
+  </button>
+  <button class="sidebar-btn" title="Volunteers">
+    <span class="material-symbols-outlined">groups</span>
+  </button>
+  <button class="sidebar-btn" title="Needs">
+    <span class="material-symbols-outlined">campaign</span>
+  </button>
+  <button class="sidebar-btn" title="Matches">
+    <span class="material-symbols-outlined">handshake</span>
+  </button>
+  <div class="sidebar-divider"></div>
+  <button class="sidebar-btn" title="Reports">
+    <span class="material-symbols-outlined">analytics</span>
+  </button>
+  <button class="sidebar-btn" title="Settings">
+    <span class="material-symbols-outlined">settings</span>
+  </button>
+  <div class="sidebar-bottom">
+    <button class="sidebar-btn" title="Logout" onclick="window.location.href='/logout'">
+      <span class="material-symbols-outlined">logout</span>
+    </button>
+    <div class="sidebar-avatar" title="Admin">A</div>
   </div>
-</div>
-
-
-<!-- ══════════════════════════════════════════════════════════
-     MAIN PAGE CONTENT
-     No left sidebar. No search bar. No "New Initiative".
-     Hero navbar is used instead (not included here).
-══════════════════════════════════════════════════════════ -->
-<main>
-  <div class="page-body" style="max-width:1340px;margin:0 auto;padding:36px 32px 80px;display:flex;flex-direction:column;gap:28px;">
-
-
-    <!-- ── WELCOME — skeleton then real ──────────────────── -->
-    <!--
-      .page-skel shown during load. .page-real hidden during load.
-      JS class 'page-loaded' on <body> switches them.
-    -->
-    <section class="welcome-section">
-      <!-- Skeleton welcome -->
-      <div class="page-skel">
-        <div class="skel skel-md" style="width:340px;height:30px;margin-bottom:10px;"></div>
-        <div class="skel skel-sm" style="width:260px;height:16px;"></div>
+</aside>
+ 
+<!-- ═══ MAIN ═══ -->
+<div class="main-wrapper">
+ 
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-title">Admin Dashboard</div>
+    <div class="topbar-search">
+      <span class="material-symbols-outlined" style="font-size:18px">search</span>
+      <input type="text" placeholder="Search platform…"/>
+    </div>
+    <div class="topbar-badge">
+      <span class="material-symbols-outlined" style="font-size:15px;font-variation-settings:'FILL' 1">circle</span>
+      <span id="topbar-live-label">Loading…</span>
+    </div>
+    <button class="icon-btn" title="Notifications">
+      <span class="material-symbols-outlined" style="font-size:18px">notifications</span>
+    </button>
+    <button class="refresh-btn" id="globalRefreshBtn" title="Refresh" onclick="loadDashboard()"
+            style="background:var(--primary-bg);color:var(--primary);border-radius:10px;width:36px;height:36px;">
+      <span class="material-symbols-outlined" style="font-size:18px">refresh</span>
+    </button>
+  </header>
+ 
+  <!-- PAGE BODY -->
+  <div class="page-body">
+ 
+    <!-- WELCOME BAR -->
+    <div class="welcome-bar" id="welcomeBar">
+      <div>
+        <div class="welcome-title" id="welcomeTitle">
+          <div class="skel" style="width:280px;height:22px;background:rgba(255,255,255,.15);animation:none;"></div>
+        </div>
+        <div class="welcome-sub" id="welcomeSub">
+          <div class="skel" style="width:200px;height:14px;margin-top:8px;background:rgba(255,255,255,.1);animation:none;"></div>
+        </div>
       </div>
-      <!-- Real welcome -->
-      <div class="page-real">
-        <h2>Welcome back, Admin 👋</h2>
-        <p>Here's a snapshot of the platform today</p>
+      <div class="welcome-meta">
+        <div class="welcome-date" id="welcomeDate"></div>
+        <button class="refresh-btn" id="welcomeRefreshBtn" onclick="loadDashboard()">
+          <span class="material-symbols-outlined" style="font-size:18px">refresh</span>
+        </button>
       </div>
-    </section>
-
-
-    <!-- ── STATS ROW — each card has skeleton + real layers ── -->
-    <section class="stats-grid">
-
-      <!-- Total NGOs -->
+    </div>
+ 
+    <!-- STATS ROW -->
+    <div class="stats-grid" id="statsGrid">
+      <!-- Skeleton stat cards -->
       <div class="stat-card">
-        <div class="page-skel stat-skel-inner">
-          <div class="skel skel-rect" style="width:42px;height:42px;border-radius:12px;"></div>
-          <div style="display:flex;flex-direction:column;gap:7px;flex:1;">
-            <div class="skel skel-sm" style="width:65%;"></div>
-            <div class="skel skel-md" style="width:45%;height:22px;"></div>
-          </div>
-        </div>
-        <div class="page-real">
-          <div class="stat-icon-wrap" style="background:rgba(147,247,191,.25);">
-            <span class="material-symbols-outlined" style="color:#006c44;">apartment</span>
-          </div>
-          <div class="stat-label">Total NGOs</div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;">
-            <div class="stat-num" data-target="1248">0</div>
-            <span class="stat-badge-g">+12%</span>
-          </div>
-        </div>
+        <div class="skel" style="width:42px;height:42px;border-radius:12px;margin-bottom:14px;"></div>
+        <div class="skel" style="width:70%;height:11px;margin-bottom:10px;"></div>
+        <div class="skel" style="width:45%;height:30px;"></div>
       </div>
-
-      <!-- Volunteers -->
       <div class="stat-card">
-        <div class="page-skel stat-skel-inner">
-          <div class="skel skel-rect" style="width:42px;height:42px;border-radius:12px;"></div>
-          <div style="display:flex;flex-direction:column;gap:7px;flex:1;">
-            <div class="skel skel-sm" style="width:60%;"></div>
-            <div class="skel skel-md" style="width:50%;height:22px;"></div>
-          </div>
-        </div>
-        <div class="page-real">
-          <div class="stat-icon-wrap" style="background:rgba(255,221,184,.35);">
-            <span class="material-symbols-outlined" style="color:#855300;">groups</span>
-          </div>
-          <div class="stat-label">Volunteers</div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;">
-            <div class="stat-num" data-target="42500" data-suffix="k" data-divisor="1000">0</div>
-            <span class="stat-badge-a">+8%</span>
-          </div>
-        </div>
+        <div class="skel" style="width:42px;height:42px;border-radius:12px;margin-bottom:14px;"></div>
+        <div class="skel" style="width:65%;height:11px;margin-bottom:10px;"></div>
+        <div class="skel" style="width:50%;height:30px;"></div>
       </div>
-
-      <!-- Open Needs -->
       <div class="stat-card">
-        <div class="page-skel stat-skel-inner">
-          <div class="skel skel-rect" style="width:42px;height:42px;border-radius:12px;"></div>
-          <div style="display:flex;flex-direction:column;gap:7px;flex:1;">
-            <div class="skel skel-sm" style="width:55%;"></div>
-            <div class="skel skel-md" style="width:40%;height:22px;"></div>
-          </div>
-        </div>
-        <div class="page-real">
-          <div class="stat-icon-wrap" style="background:rgba(255,218,216,.35);">
-            <span class="material-symbols-outlined" style="color:#a83639;">campaign</span>
-          </div>
-          <div class="stat-label">Open Needs</div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;">
-            <div class="stat-num" data-target="312">0</div>
-            <div style="width:48px;height:4px;background:#f0f0f0;border-radius:99px;overflow:hidden;">
-              <div class="stat-bar-fill" style="background:#a83639;width:0%;height:100%;border-radius:99px;transition:width 1s ease .3s;"></div>
-            </div>
-          </div>
-        </div>
+        <div class="skel" style="width:42px;height:42px;border-radius:12px;margin-bottom:14px;"></div>
+        <div class="skel" style="width:72%;height:11px;margin-bottom:10px;"></div>
+        <div class="skel" style="width:40%;height:30px;"></div>
       </div>
-
-      <!-- Completed -->
       <div class="stat-card">
-        <div class="page-skel stat-skel-inner">
-          <div class="skel skel-rect" style="width:42px;height:42px;border-radius:12px;"></div>
-          <div style="display:flex;flex-direction:column;gap:7px;flex:1;">
-            <div class="skel skel-sm" style="width:58%;"></div>
-            <div class="skel skel-md" style="width:44%;height:22px;"></div>
-          </div>
-        </div>
-        <div class="page-real">
-          <div class="stat-icon-wrap" style="background:rgba(147,247,191,.25);">
-            <span class="material-symbols-outlined" style="color:#006c44;">task_alt</span>
-          </div>
-          <div class="stat-label">Completed</div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;">
-            <div class="stat-num" data-target="18200" data-suffix="k" data-divisor="1000">0</div>
-            <span class="stat-badge-g">94%</span>
-          </div>
-        </div>
+        <div class="skel" style="width:42px;height:42px;border-radius:12px;margin-bottom:14px;"></div>
+        <div class="skel" style="width:60%;height:11px;margin-bottom:10px;"></div>
+        <div class="skel" style="width:55%;height:30px;"></div>
       </div>
-
-      <!-- Matches Made -->
-      <div class="stat-card">
-        <div class="page-skel stat-skel-inner">
-          <div class="skel skel-rect" style="width:42px;height:42px;border-radius:12px;"></div>
-          <div style="display:flex;flex-direction:column;gap:7px;flex:1;">
-            <div class="skel skel-sm" style="width:62%;"></div>
-            <div class="skel skel-md" style="width:42%;height:22px;"></div>
-          </div>
-        </div>
-        <div class="page-real">
-          <div class="stat-icon-wrap" style="background:rgba(255,221,184,.35);">
-            <span class="material-symbols-outlined" style="color:#855300;">handshake</span>
-          </div>
-          <div class="stat-label">Matches Made</div>
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:6px;">
-            <div class="stat-num" data-target="5890">0</div>
-            <span class="stat-badge-a">New!</span>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-
-    <!-- ── MAIN GRID ──────────────────────────────────────── -->
-    <div style="display:grid;grid-template-columns:1fr 390px;gap:20px;" id="main-grid">
-
-      <!-- ────── LEFT COLUMN ────── -->
-      <div style="display:flex;flex-direction:column;gap:20px;">
-
-        <!-- RECENTLY REGISTERED NGOs TABLE with skeleton -->
-        <div class="card">
+    </div>
+ 
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+ 
+      <!-- LEFT COLUMN -->
+      <div class="left-col">
+ 
+        <!-- NGO TABLE CARD -->
+        <div class="card" id="ngoTableCard">
           <div class="card-header">
-            <div class="card-title">Recently Registered NGOs</div>
-            <!--
-              "View All" → opens #ngo-list-modal
-              Wired in app.js via id="ngo-viewall-btn"
-            -->
+            <div>
+              <div class="card-title">Recently Registered NGOs</div>
+              <div class="card-subtitle">All organisations that joined the platform</div>
+            </div>
             <button class="view-all-btn" id="ngo-viewall-btn">
               View All <span class="material-symbols-outlined">arrow_forward</span>
             </button>
           </div>
-
-          <!--
-            .section-wrap.loading → skeleton visible, real rows hidden
-            .section-wrap.loaded  → skeleton hidden, real rows visible
-            JS toggles this in app.js after SKELETON_DELAY
-          -->
-          <div class="section-wrap loading" id="ngo-table-wrap">
-
-            <!-- SKELETON TABLE ROWS -->
-            <div class="skel-rows">
-              <table class="ngo-table">
-                <thead>
-                  <tr>
-                    <th>Organisation</th>
-                    <th>Location</th>
-                    <th>Joined</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- 3 skeleton rows -->
-                  <tr class="skeleton-row" style="display:table-row;">
-                    <td><div style="display:flex;align-items:center;gap:10px;"><div class="skel skel-circ" style="width:30px;height:30px;flex-shrink:0;"></div><div class="skel skel-md" style="width:120px;"></div></div></td>
-                    <td><div class="skel skel-sm" style="width:90px;"></div></td>
-                    <td><div class="skel skel-sm" style="width:80px;"></div></td>
-                    <td><div class="skel skel-pill" style="width:64px;height:18px;"></div></td>
-                    <td><div class="skel skel-pill" style="width:56px;height:26px;float:right;"></div></td>
-                  </tr>
-                  <tr class="skeleton-row" style="display:table-row;">
-                    <td><div style="display:flex;align-items:center;gap:10px;"><div class="skel skel-circ" style="width:30px;height:30px;flex-shrink:0;"></div><div class="skel skel-md" style="width:100px;"></div></div></td>
-                    <td><div class="skel skel-sm" style="width:75px;"></div></td>
-                    <td><div class="skel skel-sm" style="width:80px;"></div></td>
-                    <td><div class="skel skel-pill" style="width:60px;height:18px;"></div></td>
-                    <td><div class="skel skel-pill" style="width:56px;height:26px;float:right;"></div></td>
-                  </tr>
-                  <tr class="skeleton-row" style="display:table-row;">
-                    <td><div style="display:flex;align-items:center;gap:10px;"><div class="skel skel-circ" style="width:30px;height:30px;flex-shrink:0;"></div><div class="skel skel-md" style="width:110px;"></div></div></td>
-                    <td><div class="skel skel-sm" style="width:85px;"></div></td>
-                    <td><div class="skel skel-sm" style="width:80px;"></div></td>
-                    <td><div class="skel skel-pill" style="width:64px;height:18px;"></div></td>
-                    <td><div class="skel skel-pill" style="width:56px;height:26px;float:right;"></div></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- REAL TABLE ROWS -->
-            <div class="real-rows" style="display:none;">
-              <table class="ngo-table">
-                <thead>
-                  <tr>
-                    <th>Organisation</th>
-                    <th>Location</th>
-                    <th>Joined</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><div style="display:flex;align-items:center;gap:10px;"><div class="ngo-avatar" style="background:#d1fae5;color:#006c44;">GR</div><span class="ngo-name">GreenRoots Foundation</span></div></td>
-                    <td class="ngo-meta">Mumbai, India</td>
-                    <td class="ngo-meta">Oct 12, 2023</td>
-                    <td><span class="status-pill s-v"><span class="dot"></span><span class="lbl">Verified</span></span></td>
-                    <td style="text-align:right;"><button class="review-btn">Review</button></td>
-                  </tr>
-                  <tr>
-                    <td><div style="display:flex;align-items:center;gap:10px;"><div class="ngo-avatar" style="background:#fef3c7;color:#855300;">SH</div><span class="ngo-name">Sahaya Hands</span></div></td>
-                    <td class="ngo-meta">Bengaluru, India</td>
-                    <td class="ngo-meta">Oct 11, 2023</td>
-                    <td><span class="status-pill s-p"><span class="dot"></span><span class="lbl">Pending</span></span></td>
-                    <td style="text-align:right;"><button class="review-btn">Review</button></td>
-                  </tr>
-                  <tr>
-                    <td><div style="display:flex;align-items:center;gap:10px;"><div class="ngo-avatar" style="background:#fde8e8;color:#a83639;">EJ</div><span class="ngo-name">EduJoy Trust</span></div></td>
-                    <td class="ngo-meta">Delhi, India</td>
-                    <td class="ngo-meta">Oct 10, 2023</td>
-                    <td><span class="status-pill s-v"><span class="dot"></span><span class="lbl">Verified</span></span></td>
-                    <td style="text-align:right;"><button class="review-btn">Review</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
+          <div id="ngoTableBody">
+            <!-- Skeleton rows -->
+            <table class="ngo-table">
+              <thead><tr>
+                <th>Organisation</th><th>Location</th><th>Joined</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="ngoTableBodyInner">
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="skel skel-circle" style="width:32px;height:32px;flex-shrink:0;"></div><div class="skel" style="width:120px;height:13px;"></div></div></td>
+                  <td><div class="skel" style="width:90px;height:12px;"></div></td>
+                  <td><div class="skel" style="width:80px;height:12px;"></div></td>
+                  <td><div class="skel" style="width:70px;height:20px;border-radius:99px;"></div></td>
+                  <td><div class="skel" style="width:56px;height:28px;border-radius:8px;float:right;"></div></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="skel skel-circle" style="width:32px;height:32px;flex-shrink:0;"></div><div class="skel" style="width:105px;height:13px;"></div></div></td>
+                  <td><div class="skel" style="width:75px;height:12px;"></div></td>
+                  <td><div class="skel" style="width:80px;height:12px;"></div></td>
+                  <td><div class="skel" style="width:65px;height:20px;border-radius:99px;"></div></td>
+                  <td><div class="skel" style="width:56px;height:28px;border-radius:8px;float:right;"></div></td>
+                </tr>
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="skel skel-circle" style="width:32px;height:32px;flex-shrink:0;"></div><div class="skel" style="width:130px;height:13px;"></div></div></td>
+                  <td><div class="skel" style="width:85px;height:12px;"></div></td>
+                  <td><div class="skel" style="width:80px;height:12px;"></div></td>
+                  <td><div class="skel" style="width:72px;height:20px;border-radius:99px;"></div></td>
+                  <td><div class="skel" style="width:56px;height:28px;border-radius:8px;float:right;"></div></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <!-- PLATFORM ACTIVITY FEED with skeleton -->
+ 
+        <!-- ACTIVITY FEED CARD -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Platform Activity Feed</div>
-          </div>
-          <!-- Skeleton activity lines -->
-          <div class="activity-wrap page-skel" style="padding:16px 22px 20px;display:flex;flex-direction:column;gap:18px;">
-            <div style="display:flex;gap:12px;align-items:flex-start;">
-              <div class="skel skel-rect" style="width:32px;height:32px;border-radius:9px;flex-shrink:0;"></div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:7px;padding-top:3px;">
-                <div class="skel skel-md" style="width:72%;"></div>
-                <div class="skel skel-sm" style="width:30%;"></div>
-              </div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start;">
-              <div class="skel skel-rect" style="width:32px;height:32px;border-radius:9px;flex-shrink:0;"></div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:7px;padding-top:3px;">
-                <div class="skel skel-md" style="width:65%;"></div>
-                <div class="skel skel-sm" style="width:28%;"></div>
-              </div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start;">
-              <div class="skel skel-rect" style="width:32px;height:32px;border-radius:9px;flex-shrink:0;"></div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:7px;padding-top:3px;">
-                <div class="skel skel-md" style="width:78%;"></div>
-                <div class="skel skel-sm" style="width:26%;"></div>
-              </div>
-            </div>
-            <div style="display:flex;gap:12px;align-items:flex-start;">
-              <div class="skel skel-rect" style="width:32px;height:32px;border-radius:9px;flex-shrink:0;"></div>
-              <div style="flex:1;display:flex;flex-direction:column;gap:7px;padding-top:3px;">
-                <div class="skel skel-md" style="width:68%;"></div>
-                <div class="skel skel-sm" style="width:22%;"></div>
-              </div>
+            <div>
+              <div class="card-title">Platform Activity Feed</div>
+              <div class="card-subtitle">Recent events across the platform</div>
             </div>
           </div>
-          <!-- Real activity feed -->
-          <div class="activity-wrap page-real">
-            <div class="activity-line"></div>
-            <div class="activity-item">
-              <div class="activity-icon" style="background:#006c44;"><span class="material-symbols-outlined">verified</span></div>
-              <div>
-                <div class="activity-text"><span style="color:#006c44;font-weight:700;">GreenRoots Foundation</span> was successfully verified</div>
-                <div class="activity-time">2 hours ago</div>
+          <div class="activity-wrap" id="activityFeed">
+            <!-- Skeleton -->
+            <div class="activity-item" style="pointer-events:none;">
+              <div class="skel" style="width:34px;height:34px;border-radius:10px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skel" style="width:72%;height:13px;margin-bottom:6px;"></div>
+                <div class="skel" style="width:30%;height:11px;"></div>
               </div>
             </div>
-            <div class="activity-item">
-              <div class="activity-icon" style="background:#855300;"><span class="material-symbols-outlined">person_add</span></div>
-              <div>
-                <div class="activity-text">New volunteer <span style="color:#855300;font-weight:700;">Arjun Sharma</span> joined the platform</div>
-                <div class="activity-time">4 hours ago</div>
+            <div class="activity-item" style="pointer-events:none;">
+              <div class="skel" style="width:34px;height:34px;border-radius:10px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skel" style="width:65%;height:13px;margin-bottom:6px;"></div>
+                <div class="skel" style="width:25%;height:11px;"></div>
               </div>
             </div>
-            <div class="activity-item">
-              <div class="activity-icon" style="background:#a83639;"><span class="material-symbols-outlined">medical_services</span></div>
-              <div>
-                <div class="activity-text"><span style="color:#a83639;font-weight:700;">Medical Camp Need</span> fulfilled by Sahaya Hands</div>
-                <div class="activity-time">6 hours ago</div>
+            <div class="activity-item" style="pointer-events:none;">
+              <div class="skel" style="width:34px;height:34px;border-radius:10px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skel" style="width:78%;height:13px;margin-bottom:6px;"></div>
+                <div class="skel" style="width:28%;height:11px;"></div>
               </div>
             </div>
-            <div class="activity-item">
-              <div class="activity-icon" style="background:#006c44;"><span class="material-symbols-outlined">handshake</span></div>
-              <div>
-                <div class="activity-text">Match established between <span style="color:#006c44;font-weight:700;">Global Aid</span> &amp; <span style="color:#006c44;font-weight:700;">Volunteer X</span></div>
-                <div class="activity-time">Yesterday</div>
+            <div class="activity-item" style="pointer-events:none;border-bottom:none;">
+              <div class="skel" style="width:34px;height:34px;border-radius:10px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skel" style="width:60%;height:13px;margin-bottom:6px;"></div>
+                <div class="skel" style="width:22%;height:11px;"></div>
               </div>
             </div>
           </div>
         </div>
-
+ 
       </div>
-      <!-- END LEFT COLUMN -->
-
-
-      <!-- ────── RIGHT COLUMN ────── -->
-      <div style="display:flex;flex-direction:column;gap:20px;">
-
-        <!-- NGO VERIFICATION QUEUE with skeleton -->
+ 
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+ 
+        <!-- VERIFICATION QUEUE -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">NGO Verification Queue</div>
+            <div>
+              <div class="card-title">NGO Verification Queue</div>
+              <div class="card-subtitle">Organisations awaiting review</div>
+            </div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <span class="pending-badge">3 Pending</span>
-              <!--
-                "View All" → opens #verif-modal
-                Wired in app.js via id="verif-viewall-btn"
-              -->
+              <span class="pending-badge" id="pendingBadge">…</span>
               <button class="view-all-btn" id="verif-viewall-btn">
                 View All <span class="material-symbols-outlined">arrow_forward</span>
               </button>
             </div>
           </div>
-
-          <div class="section-wrap loading" id="verif-card-wrap">
-
-            <!-- SKELETON CARDS -->
-            <div class="skel-cards">
-              <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-                <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-                <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-                  <div class="skel skel-md" style="width:60%;"></div>
-                  <div class="skel skel-sm" style="width:40%;"></div>
-                  <div style="display:flex;gap:6px;margin-top:2px;"><div class="skel skel-pill" style="height:28px;flex:1;"></div><div class="skel skel-pill" style="height:28px;flex:1;"></div></div>
-                </div>
-              </div>
-              <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-                <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-                <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-                  <div class="skel skel-md" style="width:50%;"></div>
-                  <div class="skel skel-sm" style="width:35%;"></div>
-                  <div style="display:flex;gap:6px;margin-top:2px;"><div class="skel skel-pill" style="height:28px;flex:1;"></div><div class="skel skel-pill" style="height:28px;flex:1;"></div></div>
-                </div>
-              </div>
-              <div style="background:#f8f9ff;border:1px solid rgba(0,108,68,.07);border-radius:14px;padding:14px;display:flex;gap:13px;align-items:flex-start;">
-                <div class="skel skel-rect" style="width:46px;height:46px;flex-shrink:0;"></div>
-                <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
-                  <div class="skel skel-md" style="width:55%;"></div>
-                  <div class="skel skel-sm" style="width:38%;"></div>
-                  <div style="display:flex;gap:6px;margin-top:2px;"><div class="skel skel-pill" style="height:28px;flex:1;"></div><div class="skel skel-pill" style="height:28px;flex:1;"></div></div>
-                </div>
+          <div class="verif-list" id="verifList">
+            <!-- Skeleton -->
+            <div class="verif-card" style="pointer-events:none;">
+              <div class="skel" style="width:46px;height:46px;border-radius:12px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skel" style="width:60%;height:13px;margin-bottom:8px;"></div>
+                <div class="skel" style="width:42%;height:11px;margin-bottom:12px;"></div>
+                <div style="display:flex;gap:8px;"><div class="skel" style="flex:1;height:32px;border-radius:9px;"></div><div class="skel" style="flex:1;height:32px;border-radius:9px;"></div></div>
               </div>
             </div>
-
-            <!-- REAL VERIF CARDS -->
-            <div class="real-cards" style="display:none;flex-direction:column;gap:10px;">
-
-              <div class="verif-card">
-                <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8yxrXpGvQWHpfJGZXQNPwwwc-MEyHHtKXuq_nRV37CnmuMkO9szxQm2gWtfNtdYJo_jkqQ-ffnXnG439aNVtgaioNZbWbQ_u-kd3ygVpON19ZWn6tgWJOPL5Y9dwfvN-sWuPGIwWUqcL8UMeKSXKeGRu-TL1oBIWnhem-s3B0cXWSoBrhoCiOlPoJM-25CcWgFEorBJ-tQfcRbX5iIJtKtaJpUI5Ci3Fz2KUAiHuU69OoN6EELBVgX59IxyPbVMH9JRTa3tl7UIPV" alt="Future Stars"/>
-                <div style="flex:1;">
-                  <div class="verif-name">Future Stars Education</div>
-                  <div class="verif-meta">Est. 2015 · Focus: Children</div>
-                  <div class="verif-btns">
-                    <button class="btn-verify">Verify</button>
-                    <button class="btn-reject">Reject</button>
-                  </div>
-                </div>
+            <div class="verif-card" style="pointer-events:none;">
+              <div class="skel" style="width:46px;height:46px;border-radius:12px;flex-shrink:0;"></div>
+              <div style="flex:1;">
+                <div class="skel" style="width:50%;height:13px;margin-bottom:8px;"></div>
+                <div class="skel" style="width:38%;height:11px;margin-bottom:12px;"></div>
+                <div style="display:flex;gap:8px;"><div class="skel" style="flex:1;height:32px;border-radius:9px;"></div><div class="skel" style="flex:1;height:32px;border-radius:9px;"></div></div>
               </div>
-
-              <div class="verif-card">
-                <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv0iXUp24lmSmanR4WvcatuuNIixseRzGnig2G0U-fIFdPqibO6IgrfBmWZJuIDbK87nhL7wgr2Uq0NmYIEYeZXh29CApBuCqcZZczb_LpdK7VpCwrcrC3_wTwIX6LnpzEUXuxDM03ftwK8eeTXuEE7W6RsusydsELeHCqgDmuKHcAX9qi5uKR5c7JMhpCH10m0gJ3Ny_eC6P4EIPLc1zI0oeGv-JFaJDSC0KM4--vyhw3Wb8GYP33z_uGOVX2jF3MYHxqX1_E3SDV" alt="Anna Seva"/>
-                <div style="flex:1;">
-                  <div class="verif-name">Anna Seva Kitchens</div>
-                  <div class="verif-meta">Est. 2021 · Focus: Food Relief</div>
-                  <div class="verif-btns">
-                    <button class="btn-verify">Verify</button>
-                    <button class="btn-reject">Reject</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="verif-card">
-                <img class="verif-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVVNKT56B0am769mE3j0RdmIeXMU-h4nkAhLzQKYouJ9gDzs5RXR3WjCqgMNRspDGHfCoD5ibtKyw2NCfj9m3aom5YJMg9UgC5XCzEKRul-wbMABVpaUSc43JycLp54vVtd9hY2HPUn0noimZLLJkb80dXiwPl-fQGAjYPX6xgyqKVW8SFj5hdjYLfeSwG6CoIJnSYvdl9xeWkTtr4dSbQxTz7d14pCri-ZkVBQkinNBI0fZgQRz8LG3o_0eM7_d-FYesAplLYM9k3" alt="HealthGuard"/>
-                <div style="flex:1;">
-                  <div class="verif-name">HealthGuard India</div>
-                  <div class="verif-meta">Est. 2018 · Focus: Medical</div>
-                  <div class="verif-btns">
-                    <button class="btn-verify">Verify</button>
-                    <button class="btn-reject">Reject</button>
-                  </div>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
-
-        <!-- NEEDS BY CATEGORY — Chart.js with skeleton -->
+ 
+        <!-- CHART CARD -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Needs by Category</div>
-            <!-- Tab switcher: Doughnut / Bar -->
-            <div class="chart-tabs page-real">
-              <button class="chart-tab active" data-chart="doughnut">Donut</button>
-              <button class="chart-tab" data-chart="bar">Bar</button>
+            <div>
+              <div class="card-title">Needs by Category</div>
+              <div class="card-subtitle">Distribution across the platform</div>
+            </div>
+            <div class="chart-tabs" id="chartTabs">
+              <button class="chart-tab active" data-type="doughnut">Donut</button>
+              <button class="chart-tab" data-type="bar">Bar</button>
             </div>
           </div>
-
-          <!-- Skeleton chart placeholder -->
-          <div class="page-skel" style="padding:20px 22px 22px;">
-            <div style="display:flex;justify-content:center;margin-bottom:20px;">
-              <div class="skel skel-circle" style="width:160px;height:160px;"></div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <div style="display:flex;align-items:center;gap:7px;">
-                <div class="skel skel-rect" style="width:10px;height:10px;border-radius:3px;"></div>
-                <div class="skel skel-sm" style="width:80px;"></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:7px;">
-                <div class="skel skel-rect" style="width:10px;height:10px;border-radius:3px;"></div>
-                <div class="skel skel-sm" style="width:75px;"></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:7px;">
-                <div class="skel skel-rect" style="width:10px;height:10px;border-radius:3px;"></div>
-                <div class="skel skel-sm" style="width:68px;"></div>
-              </div>
-              <div style="display:flex;align-items:center;gap:7px;">
-                <div class="skel skel-rect" style="width:10px;height:10px;border-radius:3px;"></div>
-                <div class="skel skel-sm" style="width:72px;"></div>
-              </div>
+          <div style="padding:0 24px;" id="chartWrap">
+            <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center;">
+              <div class="skel skel-circle" style="width:160px;height:160px;" id="chartSkeleton"></div>
             </div>
           </div>
-
-          <!-- Real Chart.js chart -->
-          <div class="page-real" style="padding:16px 22px 22px;">
-            <div style="position:relative;height:220px;margin-bottom:16px;">
-              <canvas id="needsChart"></canvas>
+          <div class="chart-stat-grid" id="chartStats">
+            <div class="chart-stat-item" style="border-color:#006c44;">
+              <div class="skel" style="width:40px;height:22px;margin-bottom:4px;"></div>
+              <div class="skel" style="width:60px;height:10px;"></div>
             </div>
-            <!-- Stats summary row -->
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-              <div class="chart-stat-item" style="border-left:3px solid #006c44;">
-                <div class="chart-stat-num">125</div>
-                <div class="chart-stat-lbl">Medical</div>
-              </div>
-              <div class="chart-stat-item" style="border-left:3px solid #fea619;">
-                <div class="chart-stat-num">94</div>
-                <div class="chart-stat-lbl">Education</div>
-              </div>
-              <div class="chart-stat-item" style="border-left:3px solid #fa7272;">
-                <div class="chart-stat-num">62</div>
-                <div class="chart-stat-lbl">Food</div>
-              </div>
-              <div class="chart-stat-item" style="border-left:3px solid #d9e3f6;">
-                <div class="chart-stat-num">31</div>
-                <div class="chart-stat-lbl">Others</div>
-              </div>
+            <div class="chart-stat-item" style="border-color:#fea619;">
+              <div class="skel" style="width:35px;height:22px;margin-bottom:4px;"></div>
+              <div class="skel" style="width:55px;height:10px;"></div>
             </div>
-            <div style="text-align:center;font-size:.72rem;color:#6e7a71;font-weight:600;">
-              312 total active needs · Updated just now
+            <div class="chart-stat-item" style="border-color:#fa7272;">
+              <div class="skel" style="width:38px;height:22px;margin-bottom:4px;"></div>
+              <div class="skel" style="width:50px;height:10px;"></div>
+            </div>
+            <div class="chart-stat-item" style="border-color:#7c9cff;">
+              <div class="skel" style="width:32px;height:22px;margin-bottom:4px;"></div>
+              <div class="skel" style="width:52px;height:10px;"></div>
             </div>
           </div>
-
+          <div style="text-align:center;padding:0 24px 18px;font-size:.72rem;color:var(--outline);font-weight:600;" id="chartFooter"></div>
         </div>
-
+ 
       </div>
-      <!-- END RIGHT COLUMN -->
-
     </div>
-    <!-- END MAIN GRID -->
-
-
   </div>
-</main>
-
+</div>
+ 
+<!-- ═══ MODAL: NGO LIST ═══ -->
+<div class="modal-backdrop" id="ngo-list-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Recently Registered NGOs</div>
+        <div class="modal-subtitle">All organisations that joined SevaSetu</div>
+      </div>
+      <button class="modal-close" id="close-ngo-modal">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="ngoModalBody">
+        <table class="modal-table">
+          <thead><tr>
+            <th>Organisation</th><th>Location</th><th>Joined</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="ngoModalTableBody">
+            <tr><td colspan="5" style="padding:32px;text-align:center;color:var(--outline);">
+              <div style="display:inline-flex;gap:8px;align-items:center;">
+                <div class="skel" style="width:200px;height:14px;"></div>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ═══ MODAL: VERIFICATION ═══ -->
+<div class="modal-backdrop" id="verif-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">NGO Verification Queue</div>
+        <div class="modal-subtitle">All NGOs awaiting admin review</div>
+      </div>
+      <button class="modal-close" id="close-verif-modal">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-verif-grid" id="verifModalGrid">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<!-- Toast container -->
+<div id="toast-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
