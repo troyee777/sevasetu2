@@ -166,7 +166,7 @@ Each object must have these exact fields:
   "urgency_inferred":    true,
   "urgency_reason":      "Brief reason why this urgency was inferred",
   "required_skills":     ["Skill 1", "Skill 2"],
-  "location":            "Specific location mentioned, or empty string",
+  "location":            "Detailed specific location (e.g. 'Vidyasagapur Durga Mandir, Kharagpur'). Always try to include the city/area name if mentioned or inferred from the report context.",
   "beneficiaries":       "Who will benefit (e.g. '120 families', 'elderly residents')",
   "estimated_people":    120,
   "deadline_suggestion": "immediate | urgent | planned"
@@ -186,6 +186,8 @@ Construction, Cooking, IT Support, Translation, etc.
 IMPORTANT: Use your full reasoning ability to infer urgency and skills from context.
 A report saying "children haven't eaten in two days" implies urgency 9, Food & Nutrition,
 skills: Cooking, Logistics, Child Welfare — even if none of those words appear explicitly.
+
+LOCATION EXTRACTION: Be extremely precise with locations. If a report mentions a landmark and a city, include both. If the report context implies a specific district or city (e.g. through the NGO's header or mention of a known local area), include that city name in the location field to help the geocoder.
 
 Extract as many distinct needs as mentioned in the report. Be specific.
 """

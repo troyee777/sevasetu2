@@ -613,9 +613,21 @@ function initModalHeatmap() {
         .setLngLat([pt.lng, pt.lat])
         .addTo(modalMapInstance);
 
-      // 🔥 Click interaction
+      // 🔥 Custom Popup interaction
+      const popup = olaMaps.addPopup({ closeButton: false, offset: [0, -12] })
+        .setHTML(`
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:180px; padding:4px;">
+            <p style="font-weight:700; font-size:0.9rem; margin:0 0 4px; color:#1e293b;">${escHtml(pt.title)}</p>
+            <p style="font-size:0.75rem; color:#64748b; margin:0 0 12px;">Need Location · Urgency: ${pt.urgency}</p>
+            <button onclick="window.location.href='/need/${pt.id}/ngo'" 
+                    style="width:100%; background:#006c44; color:white; border:none; padding:8px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">
+              View Details
+            </button>
+          </div>
+        `);
+
       el.addEventListener("click", () => {
-        alert(`Need: ${pt.title}`);
+        popup.setLngLat([pt.lng, pt.lat]).addTo(modalMapInstance);
       });
     });
 
@@ -623,6 +635,86 @@ function initModalHeatmap() {
     if (geoPoints.length > 0) {
       modalMapInstance.setCenter([geoPoints[0].lng, geoPoints[0].lat]);
     }
+
+    // Initialize Search
+    initMapSearch(modalMapInstance);
+  });
+}
+
+/**
+ * ── Map Search Logic ──────────────────────────────────────────
+ * Uses Ola Maps Places API for autocomplete
+ */
+function initMapSearch(map) {
+  const input = document.getElementById('mapSearchInput');
+  const resultsDiv = document.getElementById('mapSearchResults');
+  if (!input || !resultsDiv) return;
+
+  let debounceTimer;
+
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const query = input.value.trim();
+    if (query.length < 3) {
+      resultsDiv.classList.add('hidden');
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&api_key=${OLA_MAPS_API_KEY}`);
+        const data = await res.json();
+        
+        if (data.predictions && data.predictions.length > 0) {
+          renderSearchResults(data.predictions, map, resultsDiv, input);
+        } else {
+          resultsDiv.innerHTML = '<div class="p-3 text-sm text-on-surface-variant">No results found</div>';
+          resultsDiv.classList.remove('hidden');
+        }
+      } catch (err) {
+        console.error("Search error:", err);
+      }
+    }, 300);
+  });
+
+  // Hide results when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
+      resultsDiv.classList.add('hidden');
+    }
+  });
+}
+
+function renderSearchResults(predictions, map, resultsDiv, input) {
+  resultsDiv.innerHTML = predictions.map(p => `
+    <div class="p-3 hover:bg-surface-container-low cursor-pointer border-b border-surface-container last:border-0 transition-colors"
+         data-place-id="${p.place_id}" data-text="${escHtml(p.description)}">
+      <div class="text-sm font-bold text-on-surface">${escHtml(p.structured_formatting?.main_text || p.description)}</div>
+      <div class="text-[11px] text-on-surface-variant truncate">${escHtml(p.structured_formatting?.secondary_text || '')}</div>
+    </div>
+  `).join('');
+
+  resultsDiv.classList.remove('hidden');
+
+  resultsDiv.querySelectorAll('[data-place-id]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const placeId = el.dataset.placeId;
+      input.value = el.dataset.text;
+      resultsDiv.classList.add('hidden');
+
+      try {
+        // Get coordinates for the place
+        const res = await fetch(`https://api.olamaps.io/places/v1/details?place_id=${placeId}&api_key=${OLA_MAPS_API_KEY}`);
+        const data = await res.json();
+        
+        if (data.result && data.result.geometry && data.result.geometry.location) {
+          const loc = data.result.geometry.location;
+          map.flyTo({ center: [loc.lng, loc.lat], zoom: 15 });
+        }
+      } catch (err) {
+        console.error("Place details error:", err);
+      }
+    });
   });
 }
 // ─────────────────────────────────────────────

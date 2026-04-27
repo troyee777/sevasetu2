@@ -39,8 +39,8 @@ function getNotificationOptions(payload) {
         title,
         options: {
             body,
-            icon: notification.icon || "/static/images/logo.png",
-            badge: notification.badge || "/static/images/logo.png",
+            icon: notification.icon || "/static/images/only_logo.png",
+            badge: notification.badge || "/static/images/only_logo.png",
             tag: notification.tag || data.type || "sevasetu-notification",
             data,
             requireInteraction: false,
@@ -104,13 +104,13 @@ async function initFirebase() {
 
             const title   = payload.notification?.title   || "SevaSetu";
             const body    = payload.notification?.body    || "You have a new notification";
-            const iconUrl = payload.notification?.icon    || "/static/images/logo.png";
+            const iconUrl = payload.notification?.icon    || "/static/images/only_logo.png";
             const data    = payload.data || {};
 
             self.registration.showNotification(title, {
                 body,
                 icon:  iconUrl,
-                badge: "/static/images/logo.png",
+                badge: "/static/images/only_logo.png",
                 data,
                 // Keep notification in tray until dismissed
                 requireInteraction: false,

@@ -48,8 +48,8 @@ def send_fcm_notification(uid, title, body, data=None):
             notification=messaging.WebpushNotification(
                 title=title,
                 body=body,
-                icon="/static/images/logo.png",
-                badge="/static/images/logo.png",
+                icon="/static/images/only_logo.png",
+                badge="/static/images/only_logo.png",
                 tag=fcm_data.get("type", "sevasetu-notification"),
                 data=fcm_data,
             ),

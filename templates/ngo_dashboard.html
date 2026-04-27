@@ -375,11 +375,9 @@
   <!-- Header -->
   <header class="sticky top-0 z-50 bg-surface/80 backdrop-blur-md shadow-[0_20px_40px_rgba(0,108,68,0.06)]">
     <div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-      <div class="flex items-center gap-2.5">
-        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shadow shadow-primary/25">
-          <span class="material-symbols-outlined text-white" style="font-size:16px;font-variation-settings:'FILL' 1">volunteer_activism</span>
-        </div>
-        <span class="text-xl font-extrabold text-emerald-900 tracking-tighter">SevaSetu</span>
+      <div class="flex items-center gap-2">
+        <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" class="h-10 w-auto">
+        <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" class="h-8 w-auto">
       </div>
       <div class="flex items-center gap-3">
         <!-- Chat inbox — always visible -->
@@ -634,14 +632,24 @@
           <span class="material-symbols-outlined">close</span>
         </button>
 
-        <!-- Title -->
-        <div class="p-6 border-b">
-          <h3 class="text-xl font-bold">Full Heatmap View</h3>
-          <p class="text-sm text-on-surface-variant">Explore all needs interactively</p>
+        <!-- Title & Search -->
+        <div class="p-6 border-b flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold">Full Heatmap View</h3>
+            <p class="text-sm text-on-surface-variant">Explore all needs interactively</p>
+          </div>
+          <div class="relative w-full md:w-80">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input type="text" id="mapSearchInput" 
+                   placeholder="Search location..." 
+                   class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-sm focus:ring-2 focus:ring-primary transition-all"/>
+            <!-- Results dropdown -->
+            <div id="mapSearchResults" class="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-surface-container hidden z-50 max-h-60 overflow-y-auto"></div>
+          </div>
         </div>
 
         <!-- BIG MAP -->
-        <div id="heatmapModalMap" class="w-full h-[calc(100%-80px)]"></div>
+        <div id="heatmapModalMap" class="w-full h-[calc(100%-140px)] md:h-[calc(100%-90px)]"></div>
 
       </div>
     </div>
@@ -672,7 +680,7 @@
           </div>
           <span class="text-base font-bold text-emerald-900">SevaSetu</span>
         </div>
-        <p class="text-sm text-slate-400">© 2024 SevaSetu · Elevated Neighborliness.</p>
+        <p class="text-sm text-slate-400">© 2026 SevaSetu · Elevated Neighborliness.</p>
       </div>
       <div class="flex flex-wrap justify-center gap-8">
         <a class="text-slate-400 hover:text-emerald-600 text-sm transition-colors duration-200" href="#">Privacy Policy</a>

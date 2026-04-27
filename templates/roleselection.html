@@ -17,11 +17,9 @@
   <!-- ── HEADER ── -->
   <header class="topbar">
     <div class="topbar-inner">
-      <a href="#" class="logo">
-        <div class="logo-icon">
-          <i class="fa-solid fa-hand-holding-heart"></i>
-        </div>
-        <span class="logo-text">SevaSetu</span>
+      <a href="/" class="logo" style="display:flex;align-items:center;gap:10px;">
+        <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" style="height:32px;width:auto;">
+        <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" style="height:24px;width:auto;">
       </a>
 
       <nav class="nav-links">
@@ -89,9 +87,12 @@
   <!-- ── FOOTER ── -->
   <footer class="footer">
     <div class="footer-inner">
-      <div class="footer-brand">
-        <span class="footer-logo">SevaSetu</span>
-        <p>© 2024 SevaSetu. Elevated Neighborliness.</p>
+      <div class="footer-brand" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" style="height:24px;width:auto;">
+          <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" style="height:18px;width:auto;">
+        </div>
+        <p>© 2026 SevaSetu. Elevated Neighborliness.</p>
       </div>
       <nav class="footer-links">
         <a href="#">Privacy Policy</a>

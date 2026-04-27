@@ -14,11 +14,9 @@
 
   <!-- ── LEFT PANEL ── -->
   <div class="left">
-    <div class="logo">
-      <div class="logo-icon">
-        <i class="fa-solid fa-hand-holding-heart"></i>
-      </div>
-      <div class="logo-text">SevaSetu</div>
+    <div class="logo-wrap" style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+      <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" style="height:48px;width:auto;">
+      <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" style="height:36px;width:auto;">
     </div>
 
     <h1>
@@ -103,8 +101,8 @@
                  placeholder="••••••••" required/>
         </div>
 
-        <button type="submit" class="submit-btn" data-label="Sign In to SevaSetu">
-          Sign In to SevaSetu
+        <button type="submit" class="submit-btn" data-label="Sign In">
+          Sign In
         </button>
       </form>
 

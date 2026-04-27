@@ -99,9 +99,9 @@
     <nav class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
 
       <!-- Logo -->
-      <a href="/" class="text-2xl font-bold text-emerald-900 tracking-tighter flex items-center gap-2">
-        <img src="{{ url_for('static', filename='images/logobase.png') }}" alt="SevaSetu Logo" class="h-10 w-auto">
-        SevaSetu
+      <a href="/" class="flex items-center gap-2">
+        <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" class="h-10 w-auto">
+        <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" class="h-8 w-auto">
       </a>
 
       <!-- Desktop Nav Links -->
@@ -118,8 +118,9 @@
       <div class="flex items-center gap-4">
         {% if session.get('user') %}
         <!-- Notification Bell -->
-        <button class="p-2 text-on-surface-variant hover:bg-emerald-50 rounded-full transition-all duration-200 active:scale-95">
+        <button class="p-2 text-on-surface-variant hover:bg-emerald-50 rounded-full transition-all duration-200 active:scale-95 relative">
           <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
         </button>
         <!-- Avatar -->
         <a href="/profile">
@@ -167,9 +168,9 @@
     <div class="flex flex-col md:flex-row justify-between items-center px-8 py-12 max-w-7xl mx-auto space-y-6 md:space-y-0">
 
       <div class="flex flex-col space-y-2 text-center md:text-left">
-        <div class="text-lg font-bold text-emerald-900 tracking-tighter flex items-center gap-2 justify-center md:justify-start">
-          <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">eco</span>
-          SevaSetu
+        <div class="flex items-center gap-2 justify-center md:justify-start">
+          <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" class="h-8 w-auto">
+          <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" class="h-6 w-auto">
         </div>
         <p class="text-sm text-slate-500 max-w-xs">Elevated Neighborliness. Building bridges of empathy across the community.</p>
       </div>
@@ -182,7 +183,7 @@
       </div>
 
       <div class="text-sm text-slate-500">
-        © 2024 SevaSetu. Elevated Neighborliness.
+        © 2026 SevaSetu. Elevated Neighborliness.
       </div>
 
     </div>

@@ -9,7 +9,10 @@
 <body>
   <div class="page">
     <header class="topbar">
-      <div class="brand">SevaSetu</div>
+      <div class="brand" style="display:flex;align-items:center;gap:10px;">
+        <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" style="height:32px;width:auto;">
+        <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" style="height:24px;width:auto;">
+      </div>
     </header>
 
     <main class="content">
@@ -103,6 +106,24 @@
 
         <section class="section">
           <h3>BASE LOCATION</h3>
+
+          <!-- Search bar -->
+          <div style="position:relative;margin-bottom:10px;">
+            <input type="text" id="locationSearchInput"
+                   placeholder="Search area, city, or landmark…"
+                   style="width:100%;padding:10px 14px 10px 36px;border:1.5px solid #bdcabf;
+                          border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;
+                          font-size:.875rem;outline:none;transition:border-color .2s;"
+                   autocomplete="off"/>
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);
+                         font-size:16px;color:#6e7a71;">🔍</span>
+            <!-- Autocomplete dropdown -->
+            <div id="locationSuggestions"
+                 style="display:none;position:absolute;z-index:100;top:calc(100% + 4px);left:0;right:0;
+                        background:white;border:1px solid #bdcabf;border-radius:10px;
+                        box-shadow:0 8px 24px rgba(0,0,0,.1);overflow:hidden;"></div>
+          </div>
+
           <!-- Ola Maps container -->
           <div id="locationMap" class="map-card"
                style="height:220px;border-radius:12px;overflow:hidden;"></div>
@@ -132,8 +153,11 @@
     </main>
 
     <footer class="footer">
-      <div class="brand">SevaSetu</div>
-      <div class="copyright">© 2024 SevaSetu. Elevated Neighborliness.</div>
+      <div class="brand" style="display:flex;align-items:center;gap:8px;">
+        <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" style="height:24px;width:auto;">
+        <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" style="height:18px;width:auto;">
+      </div>
+      <div class="copyright">© 2026 SevaSetu. Elevated Neighborliness.</div>
       <div class="links">
         <a href="#">Privacy Policy</a>
         <a href="#">Community Guidelines</a>

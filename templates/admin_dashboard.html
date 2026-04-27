@@ -19,13 +19,13 @@
   <div class="sidebar-logo">
     <span class="material-symbols-outlined">eco</span>
   </div>
-  <button class="sidebar-btn active" title="Dashboard">
+  <button class="sidebar-btn {{ 'active' if request.path == '/admin/dashboard' else '' }}" title="Dashboard" onclick="window.location.href='/admin/dashboard'">
     <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">dashboard</span>
   </button>
-  <button class="sidebar-btn" title="NGOs">
+  <button class="sidebar-btn {{ 'active' if request.path == '/admin/ngos' else '' }}" title="NGOs" onclick="window.location.href='/admin/ngos'">
     <span class="material-symbols-outlined">apartment</span>
   </button>
-  <button class="sidebar-btn" title="Volunteers">
+  <button class="sidebar-btn {{ 'active' if request.path == '/admin/volunteers' else '' }}" title="Volunteers" onclick="window.location.href='/admin/volunteers'">
     <span class="material-symbols-outlined">groups</span>
   </button>
   <button class="sidebar-btn" title="Needs">
@@ -63,8 +63,13 @@
       <span class="material-symbols-outlined" style="font-size:15px;font-variation-settings:'FILL' 1">circle</span>
       <span id="topbar-live-label">Loading…</span>
     </div>
-    <button class="icon-btn" title="Notifications">
+    <button class="icon-btn" id="topbar-bell-btn" title="Notifications">
       <span class="material-symbols-outlined" style="font-size:18px">notifications</span>
+    </button>
+    <button class="create-account-btn" onclick="openModal('create-account-modal')" 
+            style="background:var(--primary);color:white;border-radius:10px;padding:0 16px;height:36px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:8px;border:none;cursor:pointer;">
+      <span class="material-symbols-outlined" style="font-size:18px">person_add</span>
+      Create Account
     </button>
     <button class="refresh-btn" id="globalRefreshBtn" title="Refresh" onclick="loadDashboard()"
             style="background:var(--primary-bg);color:var(--primary);border-radius:10px;width:36px;height:36px;">
@@ -323,25 +328,68 @@
   </div>
 </div>
  
-<!-- ═══ MODAL: VERIFICATION ═══ -->
-<div class="modal-backdrop" id="verif-modal">
-  <div class="modal-box">
+<!-- ═══ MODAL: CREATE ACCOUNT ═══ -->
+<div class="modal-backdrop" id="create-account-modal">
+  <div class="modal-box" style="max-width:500px;">
     <div class="modal-head">
       <div>
-        <div class="modal-title">NGO Verification Queue</div>
-        <div class="modal-subtitle">All NGOs awaiting admin review</div>
+        <div class="modal-title">Create New Account</div>
+        <div class="modal-subtitle">Register a new Admin, Volunteer or NGO</div>
       </div>
-      <button class="modal-close" id="close-verif-modal">
+      <button class="modal-close" onclick="closeModal('create-account-modal')">
         <span class="material-symbols-outlined">close</span>
       </button>
     </div>
-    <div class="modal-body">
-      <div class="modal-verif-grid" id="verifModalGrid">
-        <!-- Rendered dynamically -->
-      </div>
+    <div class="modal-body" style="padding:24px;">
+      <form id="createAccountForm" class="space-y-5">
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Account Role</label>
+          <select id="accRole" class="w-full bg-gray-50 border-gray-200 rounded-xl py-3 text-sm focus:ring-primary focus:border-primary">
+            <option value="volunteer">Volunteer</option>
+            <option value="ngo">NGO (Organisation)</option>
+            <option value="admin">System Admin</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Full Name / Org Name</label>
+          <input type="text" id="accName" required placeholder="Enter name"
+                 class="w-full bg-gray-50 border-gray-200 rounded-xl py-3 text-sm focus:ring-primary focus:border-primary"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address</label>
+          <input type="email" id="accEmail" required placeholder="email@example.com"
+                 class="w-full bg-gray-50 border-gray-200 rounded-xl py-3 text-sm focus:ring-primary focus:border-primary"/>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Password</label>
+          <input type="password" id="accPassword" required placeholder="Minimum 6 characters"
+                 class="w-full bg-gray-50 border-gray-200 rounded-xl py-3 text-sm focus:ring-primary focus:border-primary"/>
+        </div>
+        
+        <div class="pt-4">
+          <button type="submit" id="accSubmitBtn"
+                  class="w-full bg-primary text-white py-4 rounded-xl font-bold text-sm shadow-lg shadow-primary/10 transition-all hover:bg-primary/90 active:scale-[0.98]">
+            Create Account
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
+
+<script>
+  // Quick fix for modal opening
+  if(!window.openModal) {
+    window.openModal = (id) => {
+      document.getElementById(id).classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+    window.closeModal = (id) => {
+      document.getElementById(id).classList.remove('open');
+      document.body.style.overflow = '';
+    };
+  }
+</script>
  
 <!-- Toast container -->
 <div id="toast-container"></div>

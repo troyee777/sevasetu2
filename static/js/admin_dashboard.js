@@ -1,27 +1,28 @@
 /* ═══════════════════════════════════════════════════════════════
-   admin_dashboard.js — Complete rewrite
-   - Fetches from real API endpoints
-   - Skeleton → real content transitions
-   - Chart.js donut/bar
-   - Modal open/close with fresh data
-═══════════════════════════════════════════════════════════════ */
- 
+   admin_dashboard.js — Clean Implementation
+   - Real-time Dashboard Loading
+   - NGO Verification Flow
+   - Account Creation & Deletion
+   - Chart.js Integration
+   ═══════════════════════════════════════════════════════════════ */
+
 'use strict';
- 
+
 // ── State ────────────────────────────────────────────────────────
 let dashData = null;
 let chartInstance = null;
 let currentChartType = 'doughnut';
 const COLORS = ['#006c44','#fea619','#fa7272','#7c9cff','#4dd4ac','#f97316'];
- 
+
 // ── Boot ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   setDateLabel();
   loadDashboard();
   wireModals();
   wireChartTabs();
+  wireAccountForm();
 });
- 
+
 // ── Set current date ─────────────────────────────────────────────
 function setDateLabel() {
   const el = document.getElementById('welcomeDate');
@@ -30,7 +31,7 @@ function setDateLabel() {
     weekday: 'long', day: 'numeric', month: 'long'
   });
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // MAIN LOADER
 // ══════════════════════════════════════════════════════════════════
@@ -39,19 +40,19 @@ async function loadDashboard() {
   const globalBtn  = document.getElementById('globalRefreshBtn');
   if (refreshBtn) refreshBtn.classList.add('spinning');
   if (globalBtn)  globalBtn.classList.add('spinning');
- 
+
   try {
     const res = await fetch('/api/admin/dashboard');
- 
+
     if (res.status === 401) {
       window.location.href = '/getstarted';
       return;
     }
- 
+
     if (!res.ok) throw new Error('API error ' + res.status);
- 
+
     dashData = await res.json();
- 
+
     renderWelcome(dashData);
     renderStats(dashData.stats);
     renderNgoTable(dashData.recent_ngos || []);
@@ -59,7 +60,7 @@ async function loadDashboard() {
     renderVerifQueue(dashData.pending_ngos || []);
     renderChart(dashData.category_breakdown || {});
     updateTopbarBadge(dashData.stats);
- 
+
   } catch (err) {
     console.error('Dashboard load error:', err);
     showError('Failed to load dashboard data. Retrying…');
@@ -69,7 +70,7 @@ async function loadDashboard() {
     if (globalBtn)  globalBtn.classList.remove('spinning');
   }
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // WELCOME BAR
 // ══════════════════════════════════════════════════════════════════
@@ -77,24 +78,24 @@ function renderWelcome(data) {
   const titleEl = document.getElementById('welcomeTitle');
   const subEl   = document.getElementById('welcomeSub');
   if (!titleEl || !subEl) return;
- 
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   titleEl.textContent = `${greeting}, Admin 👋`;
   subEl.textContent   = `Platform overview — ${(data.stats?.total_ngos || 0).toLocaleString('en-IN')} NGOs, ${(data.stats?.total_volunteers || 0).toLocaleString('en-IN')} volunteers active`;
 }
- 
+
 function updateTopbarBadge(stats) {
   const el = document.getElementById('topbar-live-label');
   if (el) el.textContent = `${(stats?.open_needs || 0)} open needs`;
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // STATS
 // ══════════════════════════════════════════════════════════════════
 function renderStats(stats) {
   if (!stats) return;
- 
+
   const cards = [
     {
       id:      'statNgos',
@@ -144,40 +145,42 @@ function renderStats(stats) {
       decoClr: '#006c44',
     },
   ];
- 
+
   const grid = document.getElementById('statsGrid');
-  grid.innerHTML = cards.map(c => `
-    <div class="stat-card">
-      <div class="stat-icon" style="background:${c.iconBg}">
-        <span class="material-symbols-outlined" style="color:${c.iconClr};font-size:22px;font-variation-settings:'FILL' 1">${c.icon}</span>
+  if (grid) {
+    grid.innerHTML = cards.map(c => `
+      <div class="stat-card">
+        <div class="stat-icon" style="background:${c.iconBg}">
+          <span class="material-symbols-outlined" style="color:${c.iconClr};font-size:22px;font-variation-settings:'FILL' 1">${c.icon}</span>
+        </div>
+        <div class="stat-label">${escHtml(c.label)}</div>
+        <div class="stat-value" id="${c.id}">0</div>
+        <div class="stat-footer">
+          ${c.badge
+            ? `<span class="stat-badge ${c.badgeCls}">${escHtml(c.badge)}</span>`
+            : c.barVal !== undefined
+              ? `<div class="stat-bar"><div class="stat-bar-fill" id="${c.id}Bar" style="background:${c.barClr};width:0%;"></div></div>`
+              : '<span></span>'
+          }
+        </div>
+        <div class="stat-deco" style="background:${c.decoClr};"></div>
       </div>
-      <div class="stat-label">${escHtml(c.label)}</div>
-      <div class="stat-value" id="${c.id}">0</div>
-      <div class="stat-footer">
-        ${c.badge
-          ? `<span class="stat-badge ${c.badgeCls}">${escHtml(c.badge)}</span>`
-          : c.barVal !== undefined
-            ? `<div class="stat-bar"><div class="stat-bar-fill" id="${c.id}Bar" style="background:${c.barClr};width:0%;"></div></div>`
-            : '<span></span>'
-        }
-      </div>
-      <div class="stat-deco" style="background:${c.decoClr};"></div>
-    </div>
-  `).join('');
- 
-  // Animate counters
-  cards.forEach(c => {
-    animateCounter(c.id, c.value);
-    if (c.barVal !== undefined) {
-      const pct = Math.min(Math.round((c.barVal / c.barMax) * 100), 100);
-      setTimeout(() => {
-        const barEl = document.getElementById(c.id + 'Bar');
-        if (barEl) barEl.style.width = pct + '%';
-      }, 300);
-    }
-  });
+    `).join('');
+
+    // Animate counters
+    cards.forEach(c => {
+      animateCounter(c.id, c.value);
+      if (c.barVal !== undefined) {
+        const pct = Math.min(Math.round((c.barVal / c.barMax) * 100), 100);
+        setTimeout(() => {
+          const barEl = document.getElementById(c.id + 'Bar');
+          if (barEl) barEl.style.width = pct + '%';
+        }, 300);
+      }
+    });
+  }
 }
- 
+
 function animateCounter(id, target) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -194,22 +197,22 @@ function animateCounter(id, target) {
     }
   }, 900 / steps);
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // NGO TABLE
 // ══════════════════════════════════════════════════════════════════
 function renderNgoTable(ngos) {
   const tbody = document.getElementById('ngoTableBodyInner');
   if (!tbody) return;
- 
+
   if (!ngos.length) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><span class="material-symbols-outlined">inbox</span>No NGOs registered yet.</td></tr>`;
     return;
   }
- 
+
   tbody.innerHTML = ngos.slice(0, 5).map(ngo => buildNgoRow(ngo)).join('');
 }
- 
+
 function buildNgoRow(ngo) {
   const initials = (ngo.org_name || 'NG').substring(0, 2).toUpperCase();
   const colors   = [
@@ -221,7 +224,7 @@ function buildNgoRow(ngo) {
   ];
   const col  = colors[initials.charCodeAt(0) % colors.length];
   const spill = getStatusPill(ngo.verified);
- 
+
   return `<tr>
     <td>
       <div style="display:flex;align-items:center;gap:10px;">
@@ -232,29 +235,35 @@ function buildNgoRow(ngo) {
     <td class="ngo-meta">${escHtml(ngo.city || ngo.location?.city || 'India')}</td>
     <td class="ngo-meta">${formatDate(ngo.createdAt)}</td>
     <td>${spill}</td>
-    <td style="text-align:right;"><button class="review-btn">Review</button></td>
+    <td style="text-align:right; display:flex; justify-content:flex-end; gap:8px;">
+      <button class="review-btn" onclick="openVerifModal()">Review</button>
+      <button class="delete-btn" onclick="handleDeleteAccount('${escHtml(ngo.id || ngo.uid)}', this)" 
+              style="background:#fee2e2; color:#b91c1c; border:none; border-radius:8px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; cursor:pointer;"
+              title="Delete Account">
+        <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+      </button>
+    </td>
   </tr>`;
 }
- 
+
 function getStatusPill(verified) {
   if (verified === true)  return `<span class="status-pill s-v"><span class="dot"></span>Verified</span>`;
   if (verified === false) return `<span class="status-pill s-p"><span class="dot"></span>Pending</span>`;
   return `<span class="status-pill s-p"><span class="dot"></span>Pending</span>`;
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // ACTIVITY FEED
 // ══════════════════════════════════════════════════════════════════
 function renderActivity(activities) {
   const el = document.getElementById('activityFeed');
   if (!el) return;
- 
-  // Aggregate from all NGO activity docs + fallback to fake recent events
+
   if (!activities || !activities.length) {
     el.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined">history</span><p style="font-size:.85rem;font-weight:600;">No recent activity yet.</p></div>`;
     return;
   }
- 
+
   const iconMap = {
     completed: { bg: '#006c44', icon: 'check' },
     matched:   { bg: '#855300', icon: 'handshake' },
@@ -263,7 +272,7 @@ function renderActivity(activities) {
     donation:  { bg: '#855300', icon: 'currency_rupee' },
     default:   { bg: '#6e7a71', icon: 'info' },
   };
- 
+
   el.innerHTML = activities.slice(0, 6).map(item => {
     const cfg = iconMap[item.type] || iconMap.default;
     return `<div class="activity-item">
@@ -277,85 +286,106 @@ function renderActivity(activities) {
     </div>`;
   }).join('');
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // VERIFICATION QUEUE
 // ══════════════════════════════════════════════════════════════════
 function renderVerifQueue(ngos) {
   const list    = document.getElementById('verifList');
   const badge   = document.getElementById('pendingBadge');
- 
+
   if (badge) badge.textContent = `${ngos.length} Pending`;
- 
+
   if (!list) return;
- 
+
   if (!ngos.length) {
     list.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined">check_circle</span><p style="font-size:.85rem;font-weight:600;">Queue is clear!</p></div>`;
     return;
   }
- 
+
   list.innerHTML = ngos.slice(0, 3).map(ngo => buildVerifCard(ngo)).join('');
 }
- 
+
 function buildVerifCard(ngo) {
   const initials = (ngo.org_name || 'NG').substring(0, 2).toUpperCase();
   const id = ngo.uid || ngo.id || Math.random().toString(36).slice(2);
   const logoHtml = ngo.logo_url
     ? `<img class="verif-img" src="${escHtml(ngo.logo_url)}" alt="${escHtml(ngo.org_name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="verif-img" style="display:none;background:#d1fae5;color:#006c44;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;">${escHtml(initials)}</div>`
     : `<div class="verif-img" style="background:#d1fae5;color:#006c44;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;">${escHtml(initials)}</div>`;
- 
+
   return `<div class="verif-card" data-ngo-id="${escHtml(id)}">
     ${logoHtml}
     <div style="flex:1;">
       <div class="verif-name">${escHtml(ngo.org_name || 'Unknown NGO')}</div>
       <div class="verif-meta">${escHtml(ngo.city || 'India')} · ${escHtml(ngo.description?.slice(0,40) || 'NGO')}…</div>
       <div class="verif-btns">
-        <button class="btn-verify" onclick="handleVerify('${escHtml(id)}', this)">Verify</button>
-        <button class="btn-reject" onclick="handleReject('${escHtml(id)}', this)">Reject</button>
+        <button class="btn-verify" onclick="handleVerify('${escHtml(id)}', this)"><span class="material-symbols-outlined" style="font-size:14px;font-variation-settings:'FILL' 1">check_circle</span> Verify</button>
+        <button class="btn-reject" onclick="handleReject('${escHtml(id)}', this)"><span class="material-symbols-outlined" style="font-size:14px;">cancel</span> Reject</button>
       </div>
     </div>
   </div>`;
 }
- 
+
 async function handleVerify(ngoId, btn) {
   btn.disabled = true;
+  const originalText = btn.textContent;
   btn.textContent = '…';
   try {
-    // TODO: wire to real /api/admin/ngo/<id>/verify when endpoint added
-    await sleep(600);
+    const res = await fetch(`/api/ngos/${ngoId}/verify`, { method: 'PATCH' });
+    if (!res.ok) throw new Error('API failed');
+
     btn.textContent = '✓ Verified';
     btn.style.background = '#059669';
+    btn.style.color = '#fff';
     btn.nextElementSibling.disabled = true;
     showToast('NGO verified successfully.', 'success');
-    // Remove from queue after short delay
+    
     setTimeout(() => {
       const card = btn.closest('.verif-card');
-      if (card) { card.style.opacity = '0'; card.style.transition = 'opacity .3s'; setTimeout(() => card.remove(), 300); }
+      if (card) { 
+        card.style.opacity = '0'; 
+        card.style.transition = 'opacity .3s'; 
+        setTimeout(() => card.remove(), 300); 
+      }
     }, 1200);
-  } catch {
-    btn.disabled = false; btn.textContent = 'Verify';
+  } catch (err) {
+    console.error('Verification failed:', err);
+    btn.disabled = false; 
+    btn.textContent = originalText;
+    showToast('Failed to verify NGO.', 'error');
   }
 }
- 
+
 async function handleReject(ngoId, btn) {
   btn.disabled = true;
+  const originalText = btn.textContent;
   btn.textContent = '…';
   try {
-    await sleep(600);
+    const res = await fetch(`/api/ngos/${ngoId}/suspend`, { method: 'PATCH' });
+    if (!res.ok) throw new Error('API failed');
+
     btn.textContent = '✗ Rejected';
     btn.style.background = '#fee2e2';
     btn.style.color = '#7f1d1d';
     btn.previousElementSibling.disabled = true;
     showToast('NGO marked as rejected.', 'error');
+    
     setTimeout(() => {
       const card = btn.closest('.verif-card');
-      if (card) { card.style.opacity = '0'; card.style.transition = 'opacity .3s'; setTimeout(() => card.remove(), 300); }
+      if (card) { 
+        card.style.opacity = '0'; 
+        card.style.transition = 'opacity .3s'; 
+        setTimeout(() => card.remove(), 300); 
+      }
     }, 1200);
-  } catch {
-    btn.disabled = false; btn.textContent = 'Reject';
+  } catch (err) {
+    console.error('Rejection failed:', err);
+    btn.disabled = false; 
+    btn.textContent = originalText;
+    showToast('Failed to reject NGO.', 'error');
   }
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
 // CHART.JS
 // ══════════════════════════════════════════════════════════════════
@@ -364,21 +394,18 @@ function renderChart(breakdown) {
   const statsEl  = document.getElementById('chartStats');
   const footerEl = document.getElementById('chartFooter');
   const skelEl   = document.getElementById('chartSkeleton');
- 
+
   if (!wrap) return;
- 
-  // Build labels & values from real breakdown data
+
   const categories = Object.keys(breakdown);
   const labels     = categories.length ? categories : ['Medical','Education','Food','Logistics','Other'];
   const values     = categories.length ? categories.map(k => breakdown[k]) : [0,0,0,0,0];
   const total      = values.reduce((a,b) => a+b, 0);
- 
-  // Replace skeleton with canvas
+
   if (skelEl) {
     wrap.innerHTML = `<div style="position:relative;height:220px;padding:10px 0;"><canvas id="needsChart"></canvas></div>`;
   }
- 
-  // Chart stats
+
   if (statsEl) {
     statsEl.innerHTML = labels.map((lbl, i) => `
       <div class="chart-stat-item" style="border-color:${COLORS[i % COLORS.length]};">
@@ -386,21 +413,21 @@ function renderChart(breakdown) {
         <div class="chart-stat-lbl">${escHtml(lbl)}</div>
       </div>`).join('');
   }
- 
+
   if (footerEl) footerEl.textContent = `${total.toLocaleString('en-IN')} total needs across all categories`;
- 
+
   buildChart(currentChartType, labels, values);
 }
- 
+
 function buildChart(type, labels, values) {
   const canvas = document.getElementById('needsChart');
   if (!canvas) return;
- 
+
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
- 
+
   const ctx = canvas.getContext('2d');
   const isDoughnut = type === 'doughnut';
- 
+
   chartInstance = new Chart(ctx, {
     type: isDoughnut ? 'doughnut' : 'bar',
     data: {
@@ -435,9 +462,6 @@ function buildChart(type, labels, values) {
             }
           }
         },
-        ...(isDoughnut ? {
-          doughnutCenter: true,
-        } : {}),
       },
       ...(!isDoughnut ? {
         indexAxis: 'y',
@@ -476,7 +500,7 @@ function buildChart(type, labels, values) {
     }] : [],
   });
 }
- 
+
 function wireChartTabs() {
   document.querySelectorAll('.chart-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -492,34 +516,106 @@ function wireChartTabs() {
     });
   });
 }
- 
+
+// ══════════════════════════════════════════════════════════════════
+// ACCOUNT MANAGEMENT
+// ══════════════════════════════════════════════════════════════════
+function wireAccountForm() {
+  const form = document.getElementById("createAccountForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("accSubmitBtn");
+    const role = document.getElementById("accRole").value;
+    const name = document.getElementById("accName").value;
+    const email = document.getElementById("accEmail").value;
+    const password = document.getElementById("accPassword").value;
+    
+    btn.disabled = true;
+    btn.textContent = "Creating...";
+    
+    try {
+      const res = await fetch("/api/admin/create-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, name, email, password })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast("Account created successfully!", "success");
+        if (window.closeModal) window.closeModal("create-account-modal");
+        form.reset();
+        loadDashboard();
+      } else {
+        showError(data.error || "Failed to create account");
+      }
+    } catch (err) {
+      showError("Connection error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Create Account";
+    }
+  });
+}
+
+async function handleDeleteAccount(uid, btn) {
+  if (!confirm("Are you sure you want to PERMANENTLY delete this account? This cannot be undone.")) return;
+  
+  const row = btn.closest("tr");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px; animation:spin 1s linear infinite">refresh</span>`;
+  
+  try {
+    const res = await fetch(`/api/admin/delete-account?uid=${uid}`, { method: "DELETE" });
+    if (res.ok) {
+      showToast("Account deleted", "success");
+      row.style.opacity = "0.5";
+      row.style.pointerEvents = "none";
+      setTimeout(() => row.remove(), 500);
+    } else {
+      const data = await res.json();
+      showError(data.error || "Failed to delete");
+      btn.disabled = false;
+      btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px;">delete</span>`;
+    }
+  } catch (err) {
+    showError("Connection error");
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px;">delete</span>`;
+  }
+}
+
+window.handleDeleteAccount = handleDeleteAccount;
+
 // ══════════════════════════════════════════════════════════════════
 // MODALS
 // ══════════════════════════════════════════════════════════════════
 function wireModals() {
-  // NGO modal
   document.getElementById('ngo-viewall-btn')?.addEventListener('click', openNgoModal);
   document.getElementById('close-ngo-modal')?.addEventListener('click', () => closeModal('ngo-list-modal'));
   document.getElementById('ngo-list-modal')?.addEventListener('click', e => {
     if (e.target === document.getElementById('ngo-list-modal')) closeModal('ngo-list-modal');
   });
- 
-  // Verif modal
+
   document.getElementById('verif-viewall-btn')?.addEventListener('click', openVerifModal);
   document.getElementById('close-verif-modal')?.addEventListener('click', () => closeModal('verif-modal'));
   document.getElementById('verif-modal')?.addEventListener('click', e => {
     if (e.target === document.getElementById('verif-modal')) closeModal('verif-modal');
   });
- 
-  // ESC
+
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeModal('ngo-list-modal'); closeModal('verif-modal'); }
+    if (e.key === 'Escape') { 
+      closeModal('ngo-list-modal'); 
+      closeModal('verif-modal'); 
+      closeModal('create-account-modal');
+    }
   });
 }
- 
+
 function openNgoModal() {
-  openModal('ngo-list-modal');
-  // Populate full list from cached data
+  if (window.openModal) window.openModal('ngo-list-modal');
   const tbody = document.getElementById('ngoModalTableBody');
   if (!tbody) return;
   const ngos = dashData?.recent_ngos || [];
@@ -529,9 +625,9 @@ function openNgoModal() {
   }
   tbody.innerHTML = ngos.map(ngo => buildNgoRow(ngo)).join('');
 }
- 
+
 function openVerifModal() {
-  openModal('verif-modal');
+  if (window.openModal) window.openModal('verif-modal');
   const grid = document.getElementById('verifModalGrid');
   if (!grid) return;
   const ngos = dashData?.pending_ngos || [];
@@ -541,18 +637,14 @@ function openVerifModal() {
   }
   grid.innerHTML = ngos.map(ngo => buildVerifCard(ngo)).join('');
 }
- 
-function openModal(id) {
-  const el = document.getElementById(id);
-  if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
-}
+
 function closeModal(id) {
   const el = document.getElementById(id);
   if (el) { el.classList.remove('open'); document.body.style.overflow = ''; }
 }
- 
+
 // ══════════════════════════════════════════════════════════════════
-// TOAST
+// TOAST & HELPERS
 // ══════════════════════════════════════════════════════════════════
 function showToast(msg, type='success') {
   const container = document.getElementById('toast-container');
@@ -567,19 +659,16 @@ function showToast(msg, type='success') {
     setTimeout(() => t.remove(), 300);
   }, 4000);
 }
- 
+
 function showError(msg) { showToast(msg, 'error'); }
- 
-// ══════════════════════════════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════════════════════════════
+
 function formatDate(ts) {
   if (!ts) return '—';
   const d = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
   if (isNaN(d)) return '—';
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
- 
+
 function timeAgo(ts) {
   if (!ts) return 'just now';
   const d = ts._seconds ? new Date(ts._seconds * 1000) : new Date(ts);
@@ -590,10 +679,13 @@ function timeAgo(ts) {
   if (s < 86400) return `${Math.floor(s/3600)}h ago`;
   return `${Math.floor(s/86400)}d ago`;
 }
- 
+
 function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
- 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Spin animation for the loader
+const _style = document.createElement("style");
+_style.textContent = "@keyframes spin { to { transform: rotate(360deg); } }";
+document.head.appendChild(_style);

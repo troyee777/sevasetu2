@@ -12,6 +12,8 @@ from services import imagekit_services,firebase_services,gemini_service,matching
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key-change-in-prod")
+from datetime import timedelta
+app.permanent_session_lifetime = timedelta(days=30)
 
 from flask_socketio import SocketIO, join_room, leave_room, emit
 # Vercel serverless does NOT support WebSockets (no persistent connections).
@@ -638,6 +640,26 @@ def api_volunteer_dashboard():
 
 
 # ══════════════════════════════════════════════
+# NOTIFICATIONS HELPER
+# ══════════════════════════════════════════════
+
+def add_notification(recipient_id, title, message, n_type="info", meta={}):
+    """Adds a notification to the user's notification collection."""
+    try:
+        db = firebase_services.get_db()
+        db.collection("notifications").add({
+            "recipient_id": recipient_id,
+            "title":        title,
+            "message":      message,
+            "type":         n_type,
+            "meta":         meta,
+            "read":         False,
+            "created_at":   firestore.SERVER_TIMESTAMP
+        })
+    except Exception as e:
+        logger.error(f"Error adding notification: {e}")
+
+# ══════════════════════════════════════════════
 # TASK ACTIONS
 # ══════════════════════════════════════════════
 
@@ -647,6 +669,21 @@ def api_volunteer_accept_task(task_id):
         return jsonify({"error": "Unauthorized"}), 401
 
     uid = session["user"]["uid"]
+    match_doc = firebase_services.get_db().collection("matches").document(task_id).get()
+    if match_doc.exists:
+        mdata = match_doc.to_dict()
+        ngo_id = mdata.get("ngo_id")
+        vol_name = session["user"].get("name", "A volunteer")
+        need_title = mdata.get("title", "a task")
+        if ngo_id:
+            add_notification(
+                ngo_id, 
+                "Task Accepted", 
+                f"{vol_name} has accepted the task: {need_title}",
+                "success",
+                {"match_id": task_id, "need_id": mdata.get("need_id")}
+            )
+
     firebase_services.volunteer_respond_to_match(task_id, uid, "accepted")
     return jsonify({"success": True})
 
@@ -659,6 +696,52 @@ def api_volunteer_decline_task(task_id):
     uid = session["user"]["uid"]
     firebase_services.volunteer_respond_to_match(task_id, uid, "declined")
     return jsonify({"success": True})
+
+@app.route("/api/volunteer/task/<task_id>/work", methods=["POST"])
+def api_volunteer_work_action(task_id):
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    uid = session["user"]["uid"]
+    action = request.json.get("action") # "start" or "pause"
+    
+    match_ref = firebase_services.get_db().collection("matches").document(task_id)
+    match_doc = match_ref.get()
+    
+    if not match_doc.exists:
+        return jsonify({"error": "Match not found"}), 404
+        
+    mdata = match_doc.to_dict()
+    if mdata.get("volunteer_id") != uid:
+        return jsonify({"error": "Forbidden"}), 403
+
+    new_status = "in_progress" if action == "start" else "accepted"
+    match_ref.update({"status": new_status})
+    
+    # Notify NGO
+    ngo_id = mdata.get("ngo_id")
+    vol_name = session["user"].get("name", "A volunteer")
+    need_title = mdata.get("title", "a task")
+    
+    if ngo_id:
+        if action == "start":
+            add_notification(
+                ngo_id, 
+                "Work Started", 
+                f"{vol_name} has started working on: {need_title}",
+                "info",
+                {"match_id": task_id, "need_id": mdata.get("need_id")}
+            )
+        else:
+            add_notification(
+                ngo_id, 
+                "Work Paused", 
+                f"{vol_name} has paused work on: {need_title}",
+                "warning",
+                {"match_id": task_id, "need_id": mdata.get("need_id")}
+            )
+
+    return jsonify({"success": True, "new_status": new_status})
 
 
 @app.route("/api/volunteer/task/<task_id>/complete", methods=["POST"])
@@ -681,9 +764,119 @@ def api_volunteer_complete_task(task_id):
 
 
 # ══════════════════════════════════════════════
+# VOLUNTEER WORK TRACKING
+# ══════════════════════════════════════════════
+
+@app.route("/api/volunteer/work/start", methods=["POST"])
+def api_volunteer_work_start():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    uid  = session["user"]["uid"]
+    data = request.json or {}
+    task_id = data.get("task_id")  # this is the match_id
+    
+    if not task_id:
+        return jsonify({"error": "Task ID required"}), 400
+        
+    firebase_services.start_work_session(task_id, uid)
+    return jsonify({"success": True})
+
+
+@app.route("/api/volunteer/work/pause", methods=["POST"])
+def api_volunteer_work_pause():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    uid  = session["user"]["uid"]
+    data = request.json or {}
+    task_id     = data.get("task_id")
+    comment     = data.get("comment", "")
+    duration_ms = data.get("duration_ms", 0)
+    
+    if not task_id:
+        return jsonify({"error": "Task ID required"}), 400
+        
+    firebase_services.pause_work_session(task_id, uid, comment, duration_ms)
+    return jsonify({"success": True})
+
+
+@app.route("/api/volunteer/work/location", methods=["POST"])
+def api_volunteer_work_location():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    uid  = session["user"]["uid"]
+    data = request.json or {}
+    task_id = data.get("task_id")
+    lat     = data.get("lat")
+    lng     = data.get("lng")
+    
+    if not task_id or lat is None or lng is None:
+        return jsonify({"error": "Missing params"}), 400
+        
+    firebase_services.update_task_location(task_id, uid, lat, lng)
+    return jsonify({"success": True})
+
+
+# ══════════════════════════════════════════════
 # VOLUNTEER ONLINE STATUS
 # ══════════════════════════════════════════════
 
+@app.route("/api/volunteer/location", methods=["POST"])
+def api_volunteer_location():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    uid = session["user"]["uid"]
+    data = request.json or {}
+    lat = data.get("lat")
+    lng = data.get("lng")
+    
+    if lat and lng:
+        firebase_services.get_db().collection("volunteers").document(uid).update({
+            "current_location": {
+                "lat": lat,
+                "lng": lng,
+                "updated_at": firestore.SERVER_TIMESTAMP
+            }
+        })
+        return jsonify({"success": True})
+    
+    return jsonify({"error": "Invalid coordinates"}), 400
+
+@app.route("/api/volunteer/relocate", methods=["POST"])
+def api_volunteer_relocate():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    uid = session["user"]["uid"]
+    data = request.json or {}
+    
+    lat = data.get("lat")
+    lng = data.get("lng")
+    city = data.get("city")
+    address = data.get("address")
+    
+    if not all([lat, lng, city]):
+        return jsonify({"error": "Missing relocation data"}), 400
+        
+    db = firebase_services.get_db()
+    db.collection("volunteers").document(uid).update({
+        "location": {"lat": lat, "lng": lng},
+        "city": city,
+        "address": address,
+        "updated_at": firestore.SERVER_TIMESTAMP
+    })
+    
+    # Also update the user doc for consistency
+    db.collection("users").document(uid).update({
+        "city": city
+    })
+    
+    return jsonify({"success": True})
+
+# VOLUNTEER ONLINE STATUS
 @app.route("/api/volunteer/status", methods=["POST"])
 def api_volunteer_status():
     if not session.get("user"):
@@ -754,6 +947,7 @@ def firebase_login():
             "email":    email,
             "role":     role_to_save
         }
+        session.permanent = True
 
         if role_to_save == "ngo":
             return jsonify({"status": "new", "redirect": "/ngo/onboarding"})
@@ -771,6 +965,7 @@ def firebase_login():
         "email":    email,
         "role":     role
     }
+    session.permanent = True
 
     if role == "ngo":
         return jsonify({"status": "existing", "redirect": "/ngo/dashboard"})
@@ -1470,6 +1665,221 @@ def logout():
 # Run
 # ======================
 
+
+# ══════════════════════════════════════════════
+# ADMIN MANAGEMENT APIs
+# ══════════════════════════════════════════════
+
+@app.route("/api/ngos")
+def api_get_all_ngos():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db = firebase_services.get_db()
+    
+    # 1. Fetch all NGOs
+    ngo_docs = db.collection("ngos").stream()
+    
+    # 2. Get counts for needs and matches in a more efficient way
+    # Ideally, these are stored on the NGO doc, but if not, let's optimize
+    # We'll fetch the IDs and ngo_ids only to minimize data transfer
+    needs_docs = db.collection("needs").select(["ngo_id"]).stream()
+    matches_docs = db.collection("matches").select(["ngo_id"]).stream()
+    
+    needs_map = {}
+    for doc in needs_docs:
+        nid = doc.to_dict().get("ngo_id")
+        if nid: needs_map[nid] = needs_map.get(nid, 0) + 1
+        
+    matches_map = {}
+    for doc in matches_docs:
+        mid = doc.to_dict().get("ngo_id")
+        if mid: matches_map[mid] = matches_map.get(mid, 0) + 1
+    
+    ngos = []
+    for doc in ngo_docs:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        
+        # Use existing count or from our optimized maps
+        d["needs"] = d.get("needs", needs_map.get(doc.id, 0))
+        d["matches"] = d.get("matches", matches_map.get(doc.id, 0))
+            
+        # Format createdAt
+        ts = d.get("createdAt")
+        if ts and hasattr(ts, "timestamp"):
+            d["joined"] = ts.strftime("%b %d, %Y")
+            d["createdAt"] = {"_seconds": int(ts.timestamp())}
+        else:
+            d["joined"] = "N/A"
+            
+        d["status"] = "Verified" if d.get("verified") else "Pending"
+        ngos.append(d)
+        
+    return jsonify(ngos)
+
+@app.route("/api/ngos/<id>/verify", methods=["PATCH"])
+def api_verify_ngo(id):
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db = firebase_services.get_db()
+    db.collection("ngos").document(id).update({"verified": True})
+    return jsonify({"success": True})
+
+@app.route("/api/ngos/<id>/suspend", methods=["PATCH"])
+def api_suspend_ngo(id):
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db = firebase_services.get_db()
+    db.collection("ngos").document(id).update({"verified": False})
+    return jsonify({"success": True})
+
+@app.route("/api/ngos/<id>", methods=["PATCH"])
+def api_update_ngo(id):
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    db = firebase_services.get_db()
+    db.collection("ngos").document(id).update(data)
+    return jsonify({"success": True})
+
+@app.route("/api/ngos", methods=["POST"])
+def api_register_ngo_manual():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    # Handle both JSON and Multipart (from JS FormData)
+    if request.is_json:
+        data = request.json
+    else:
+        data = request.form.to_dict()
+        
+    email = data.get("email")
+    # Generate a random password if not provided, or use a default one
+    password = data.get("password", "SevaSetu123!") 
+    name = data.get("name")
+    
+    try:
+        # 1. Create Firebase Auth user
+        user = auth.create_user(
+            email=email,
+            password=password,
+            display_name=name
+        )
+        uid = user.uid
+        
+        # 2. Add to 'users' collection
+        firebase_services.add_user(uid, email, name, photo_url="", role="ngo")
+        
+        # 3. Handle file uploads if any
+        logo_url = ""
+        logo_file = request.files.get("logo")
+        if logo_file:
+            res = imagekit_services.upload_ngo_logo(uid, logo_file)
+            logo_url = res.get("url", "") if res else ""
+            
+        # 4. Create NGO profile
+        ngo_data = {
+            "org_name": name,
+            "contact_email": email,
+            "phone": data.get("phone"),
+            "city": data.get("city"),
+            "category": data.get("category"),
+            "website": data.get("website"),
+            "description": data.get("description"),
+            "logo_url": logo_url,
+            "verified": False,
+            "location": {"city": data.get("city"), "lat": None, "lng": None},
+            "createdAt": firestore.SERVER_TIMESTAMP
+        }
+        db = firebase_services.get_db()
+        db.collection("ngos").document(uid).set(ngo_data)
+        
+        return jsonify({"success": True, "uid": uid})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/api/volunteers")
+def api_get_all_volunteers():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db = firebase_services.get_db()
+    vol_docs = db.collection("volunteers").stream()
+    
+    volunteers = []
+    for doc in vol_docs:
+        d = doc.to_dict()
+        d["id"] = doc.id
+        
+        # Format createdAt
+        ts = d.get("createdAt")
+        if ts and hasattr(ts, "timestamp"):
+            d["joined"] = ts.strftime("%b %Y")
+            d["createdAt"] = {"_seconds": int(ts.timestamp())}
+        else:
+            d["joined"] = "N/A"
+            
+        d["status"] = "Active" if d.get("verified") else "Pending"
+        # Map fields for JS
+        d["image"] = d.get("photo_url", "")
+        d["tasks"] = d.get("totalTasks", 0)
+        
+        volunteers.append(d)
+        
+    return jsonify(volunteers)
+
+@app.route("/api/volunteers/<id>/approve", methods=["PATCH"])
+def api_approve_volunteer(id):
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db = firebase_services.get_db()
+    db.collection("volunteers").document(id).update({
+        "verified": True,
+        "online": True
+    })
+    return jsonify({"success": True})
+
+@app.route("/api/volunteers/<id>/suspend", methods=["PATCH"])
+def api_suspend_volunteer(id):
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    db = firebase_services.get_db()
+    db.collection("volunteers").document(id).update({"verified": False})
+    return jsonify({"success": True})
+
+@app.route("/admin/ngos")
+def admin_ngos_page():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return redirect("/getstarted")
+    return render_template("ngo-management.html", user=session["user"])
+
+@app.route("/admin/volunteers")
+def admin_volunteers_page():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return redirect("/getstarted")
+    return render_template("volunteer-management.html", user=session["user"])
+
+@app.route("/api/admin/chat-start", methods=["POST"])
+def api_admin_chat_start():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    other_uid = data.get("other_uid")
+    if not other_uid:
+        return jsonify({"error": "other_uid required"}), 400
+        
+    admin_uid = session["user"]["uid"]
+    conv_id = firebase_services.get_or_create_conversation([admin_uid, other_uid])
+    return jsonify({"success": True, "conversation_id": conv_id})
+
 if __name__ == "__main__":
     socketio.run(app, debug=True)
 
@@ -1627,9 +2037,100 @@ def api_ngo_report_action():
             matches = db.collection("matches").where("need_id", "==", need_id).where("volunteer_id", "==", vol_id).limit(1).stream()
             for doc in matches:
                 doc.reference.update({"status": "completed"})
+            
+            # Increment volunteer completed tasks count
+            vol_ref = db.collection("volunteers").document(vol_id)
+            vol_ref.update({"totalTasks": firebase_services.firestore.Increment(1)})
     else:
         # Revert to in_progress or assigned if rejected
         need_ref.update({"status": "in_progress"})
-        # Add a note maybe?
+        return jsonify({"success": True})
+
+# ══════════════════════════════════════════════════════════════════
+# ADMIN — USER MANAGEMENT
+# ══════════════════════════════════════════════════════════════════
+
+@app.route("/api/admin/create-account", methods=["POST"])
+def api_admin_create_account():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data     = request.json
+    role     = data.get("role") # 'admin', 'volunteer', 'ngo'
+    email    = data.get("email")
+    password = data.get("password")
+    name     = data.get("name")
+    
+    if not all([role, email, password, name]):
+        return jsonify({"error": "Missing required fields"}), 400
         
-    return jsonify({"success": True})
+    try:
+        from firebase_admin import auth
+        # 1. Create Auth User
+        user = auth.create_user(
+            email=email,
+            password=password,
+            display_name=name
+        )
+        uid = user.uid
+        
+        # 2. Create Firestore Profile
+        db = firebase_services.get_db()
+        
+        # Base user doc
+        user_doc = {
+            "uid": uid,
+            "email": email,
+            "name": name,
+            "role": role,
+            "onboarded": False if role != "admin" else True,
+            "createdAt": firebase_services.firestore.SERVER_TIMESTAMP
+        }
+        db.collection("users").document(uid).set(user_doc)
+        
+        # Specialized collection doc
+        if role == "volunteer":
+            db.collection("volunteers").document(uid).set({
+                "uid": uid,
+                "name": name,
+                "email": email,
+                "verified": False,
+                "createdAt": firebase_services.firestore.SERVER_TIMESTAMP
+            })
+        elif role == "ngo":
+            db.collection("ngos").document(uid).set({
+                "uid": uid,
+                "org_name": name,
+                "email": email,
+                "verified": False,
+                "createdAt": firebase_services.firestore.SERVER_TIMESTAMP
+            })
+            
+        return jsonify({"success": True, "uid": uid})
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admin/delete-account", methods=["DELETE"])
+def api_admin_delete_account():
+    if not session.get("user") or session["user"].get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    uid = request.args.get("uid")
+    if not uid:
+        return jsonify({"error": "Missing UID"}), 400
+        
+    try:
+        from firebase_admin import auth
+        # 1. Delete Auth User
+        auth.delete_user(uid)
+        
+        # 2. Delete Firestore Profiles
+        db = firebase_services.get_db()
+        db.collection("users").document(uid).delete()
+        db.collection("volunteers").document(uid).delete()
+        db.collection("ngos").document(uid).delete()
+        
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

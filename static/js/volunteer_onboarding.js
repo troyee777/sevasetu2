@@ -11,15 +11,13 @@ async function loadOlaMapsKey() {
   try {
     const res = await fetch("/api/get_ola_maps_key");
     if (!res.ok) throw new Error("Failed to fetch key");
-
     const data = await res.json();
     OLA_MAPS_API_KEY = data.OLA_MAPS_API_KEY;
-
   } catch (err) {
     console.error("Error loading Ola Maps key:", err);
   }
 }
-await loadOlaMapsKey();
+
 // ─────────────────────────────────────────────
 // DOM REFERENCES
 // ─────────────────────────────────────────────
@@ -37,7 +35,7 @@ const submitBtn        = document.getElementById("submitBtn");
 // Location state
 let selectedLat = 12.9716;  // Default: Bengaluru
 let selectedLng = 77.5946;
-let mapInstance  = null;
+let mapInstance   = null;
 let markerInstance = null;
 
 // ─────────────────────────────────────────────
@@ -147,6 +145,11 @@ function initMap() {
   const mapEl = document.getElementById("locationMap");
   if (!mapEl || typeof OlaMaps === "undefined") return;
 
+  if (!OLA_MAPS_API_KEY) {
+    mapEl.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6e7a71;font-size:.85rem;">Map unavailable — location key not loaded</div>`;
+    return;
+  }
+
   const olaMaps = new OlaMaps({ apiKey: OLA_MAPS_API_KEY });
 
   mapInstance = olaMaps.init({
@@ -184,6 +187,81 @@ function initMap() {
   });
 }
 
+function initLocationSearch() {
+  const input = document.getElementById("locationSearchInput");
+  const suggestions = document.getElementById("locationSuggestions");
+  if (!input || !suggestions) return;
+
+  let debounceTimer;
+  input.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    const query = input.value.trim();
+    if (query.length < 3) {
+      suggestions.style.display = "none";
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&api_key=${OLA_MAPS_API_KEY}`
+        );
+        const data = await res.json();
+        const predictions = data.predictions || [];
+        
+        if (predictions.length > 0) {
+          suggestions.innerHTML = predictions.map(p => `
+            <div class="suggestion-item" 
+                 style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:.85rem;"
+                 data-placeid="${p.place_id}">
+              ${p.description}
+            </div>
+          `).join("");
+          suggestions.style.display = "block";
+
+          suggestions.querySelectorAll(".suggestion-item").forEach(item => {
+            item.addEventListener("click", async () => {
+              const placeId = item.dataset.placeid;
+              input.value = item.textContent.trim();
+              suggestions.style.display = "none";
+              await selectPlace(placeId);
+            });
+          });
+        } else {
+          suggestions.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+      }
+    }, 300);
+  });
+
+  // Close suggestions on click outside
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+      suggestions.style.display = "none";
+    }
+  });
+}
+
+async function selectPlace(placeId) {
+  if (!OLA_MAPS_API_KEY) return;
+  try {
+    const res = await fetch(
+      `https://api.olamaps.io/places/v1/details?place_id=${placeId}&api_key=${OLA_MAPS_API_KEY}`
+    );
+    const data = await res.json();
+    if (data.result && data.result.geometry && data.result.geometry.location) {
+      const { lat, lng } = data.result.geometry.location;
+      updateLocation(lat, lng);
+      mapInstance?.flyTo({ center: [lng, lat], zoom: 15 });
+      markerInstance?.setLngLat([lng, lat]);
+    }
+  } catch (err) {
+    console.error("Place details error:", err);
+  }
+}
+
 function updateLocation(lat, lng) {
   selectedLat = lat;
   selectedLng = lng;
@@ -193,6 +271,7 @@ function updateLocation(lat, lng) {
 }
 
 async function reverseGeocode(lat, lng) {
+  if (!OLA_MAPS_API_KEY) return;
   try {
     const res  = await fetch(
       `https://api.olamaps.io/places/v1/reverse-geocode?latlng=${lat},${lng}&api_key=${OLA_MAPS_API_KEY}`
@@ -207,12 +286,17 @@ async function reverseGeocode(lat, lng) {
       );
       const mapTag = document.getElementById("mapLocationTag");
       if (mapTag) {
-        mapTag.textContent = city
-          ? `📍 ${city.long_name}`
-          : `📍 ${results[0].formatted_address?.split(",")[0] || "Location selected"}`;
+        if (city) {
+          mapTag.innerHTML = `📍 <strong>${city.long_name}</strong>`;
+        } else {
+          const addr = results[0].formatted_address?.split(",")[0] || "Location selected";
+          mapTag.innerHTML = `📍 ${addr}`;
+        }
       }
     }
-  } catch {}
+  } catch (err) {
+    console.error("Reverse geocoding error:", err);
+  }
 }
 
 // "Use current location" button
@@ -239,12 +323,6 @@ document.getElementById("useMyLocationBtn")?.addEventListener("click", () => {
     },
     { timeout: 8000 }
   );
-});
-
-// Init map on DOM ready
-document.addEventListener("DOMContentLoaded", () => {
-  initMap();
-  restoreDraft();
 });
 
 
@@ -361,13 +439,32 @@ function restoreDraft() {
       selectedLng = d.lng;
       document.getElementById("latitude").value  = d.lat;
       document.getElementById("longitude").value = d.lng;
+      
+      // If map is already init, move it
+      if (mapInstance && markerInstance) {
+        mapInstance.setCenter([selectedLng, selectedLat]);
+        markerInstance.setLngLat([selectedLng, selectedLat]);
+      }
+      reverseGeocode(selectedLat, selectedLng);
     }
   } catch {}
 }
 
 
 // ─────────────────────────────────────────────
-// 8. UI HELPERS
+// 8. BOOT — load key first, then init map
+// ─────────────────────────────────────────────
+
+document.addEventListener("DOMContentLoaded", async () => {
+  await loadOlaMapsKey();
+  restoreDraft(); // Load values first
+  initMap();      // Init map with loaded values
+  initLocationSearch();
+});
+
+
+// ─────────────────────────────────────────────
+// 9. UI HELPERS
 // ─────────────────────────────────────────────
 
 function setLoading(loading) {
@@ -380,7 +477,7 @@ function showError(msg) {
   const el = document.getElementById("formError");
   if (!el) { alert(msg); return; }
   el.textContent = msg;
-  el.style.display = "block";
+  el.style.display    = "block";
   el.style.background = "#fee2e2";
   el.style.color      = "#991b1b";
   el.style.borderRadius = "10px";

@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initNavDropdown();
   initKeyboardEscape();
   wireStaticModalButtons();
+  startBackgroundTracking();
 });
 
 
@@ -57,6 +58,7 @@ async function loadDashboard() {
     renderStats(data.stats);
     renderTasksForYou(_allMatchedTasks);
     renderAcceptedTasks(data.accepted_tasks);
+    renderCompletedHistory(data.completed_tasks || []);
     initMiniMap(_allMatchedTasks);
     populateAllTasksModal(_allMatchedTasks);
     updateMapModalBar(_allMatchedTasks.length);
@@ -249,6 +251,14 @@ function renderAcceptedTasks(tasks) {
           </div>
           <span class="status-chip ${statusCls}">${statusLabel}</span>
         </div>
+        <div style="margin-bottom:12px;">
+          <button onclick="handleWorkAction('${escHtml(task.id)}', '${task.status === "in_progress" ? "pause" : "start"}', this)"
+                  class="work-action-btn ${task.status === "in_progress" ? "pause" : "start"}"
+                  style="width:100%; padding:8px; border-radius:8px; font-weight:700; font-size:0.75rem; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s;">
+            <span class="material-symbols-outlined" style="font-size:16px;">${task.status === "in_progress" ? "pause_circle" : "play_circle"}</span>
+            ${task.status === "in_progress" ? "Pause Work" : "Start Work"}
+          </button>
+        </div>
         <div>
           <div class="progress-label">
             <span>${escHtml(task.phase || "In Progress")}</span>
@@ -275,9 +285,36 @@ function renderAcceptedTasks(tasks) {
 }
 
 
-// ─────────────────────────────────────────────
-// 7. ACCEPT / DECLINE ACTIONS
-// ─────────────────────────────────────────────
+function renderCompletedHistory(tasks) {
+  const container = document.getElementById("historyTasksBody");
+  if (!container) return;
+
+  if (!tasks || tasks.length === 0) {
+    container.innerHTML = `
+      <div style="padding:32px;text-align:center;color:#6e7a71;">
+        <span class="material-symbols-outlined" style="font-size:2rem;margin-bottom:8px;">history</span>
+        <p>No completed tasks in your history yet.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = tasks.map(task => `
+    <div class="task-card" style="border-left:4px solid #006c44;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+        <div>
+          <div class="task-name">${escHtml(task.title)}</div>
+          <div class="task-org">${escHtml(task.ngo_name)} · Completed ${task.completed_at || ""}</div>
+        </div>
+        <span class="status-chip sc-green">Completed</span>
+      </div>
+      <button class="view-details-btn" onclick="window.location.href='/need/${escHtml(task.need_id)}/volunteer'">
+        View Record
+      </button>
+    </div>
+  `).join("");
+}
+
+// ── ACCEPT / DECLINE ACTIONS ──────────────────────────
 
 async function acceptTask(taskId, btn) {
   if (!taskId) return;
@@ -306,6 +343,43 @@ async function acceptTask(taskId, btn) {
     showToast("Failed to accept task. Please try again.", "error");
   }
 }
+
+async function handleWorkAction(taskId, action, btn) {
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; animation:spin 1s linear infinite">refresh</span>`;
+  
+  try {
+    const res = await window.syncManager.queueAction(`/api/volunteer/task/${taskId}/work`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action })
+    });
+    
+    if (res.queued) {
+      // Logic for when action is queued (offline)
+      btn.innerHTML = originalHtml;
+      btn.disabled = false;
+      return;
+    }
+
+    const data = await res.json();
+    if (data.success) {
+      showToast(`Work ${action === "start" ? "started" : "paused"}!`, "success");
+      loadDashboard();
+    } else {
+      showToast(data.error || "Action failed", "error");
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  } catch (err) {
+    showToast("Network error", "error");
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+window.handleWorkAction = handleWorkAction;
 
 async function declineTask(taskId, btn) {
   if (!taskId) return;
@@ -418,17 +492,111 @@ function initFullMap(needs) {
       const color = need.urgency_score >= 8 ? "#a83639" : need.urgency_score >= 5 ? "#855300" : "#006c44";
       const pinEl = document.createElement("div");
       pinEl.style.cssText = `width:28px;height:28px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2.5px solid white;box-shadow:0 3px 10px rgba(0,0,0,.25);cursor:pointer;`;
+      
+      const nid = need.need_id || need.id;
       const popup = olaMaps.addPopup({ closeButton: false, offset: [0, -32] })
-        .setHTML(`<div style="font-family:'Plus Jakarta Sans',sans-serif;min-width:160px;"><p style="font-weight:700;font-size:.82rem;margin:0 0 4px">${escHtml(need.title)}</p><p style="font-size:.73rem;color:#3e4942;margin:0">${escHtml(need.ngo_name || "")} · ${need.distance_km ? need.distance_km + " km" : "Nearby"}</p></div>`);
+        .setHTML(`
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; min-width:180px; padding:4px;">
+            <p style="font-weight:700; font-size:0.9rem; margin:0 0 4px; color:#1e293b;">${escHtml(need.title)}</p>
+            <p style="font-size:0.75rem; color:#64748b; margin:0 0 12px;">${escHtml(need.ngo_name || "")} · ${need.distance_km ? need.distance_km + " km" : "Nearby"}</p>
+            <button onclick="window.location.href='/need/${escHtml(nid)}/volunteer'" 
+                    style="width:100%; background:#006c44; color:white; border:none; padding:8px; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer; transition:all 0.2s;">
+              View Details
+            </button>
+          </div>
+        `);
       olaMaps.addMarker({ element: pinEl }).setLngLat([need.lng, need.lat]).addTo(fullMapInstance)
              .on("click", () => popup.setLngLat([need.lng, need.lat]).addTo(fullMapInstance));
     });
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(pos => {
         fullMapInstance.setCenter([pos.coords.longitude, pos.coords.latitude]);
         updateLocationLabel(pos.coords.latitude, pos.coords.longitude);
       }, () => {});
     }
+
+    // Initialize Search
+    initMapSearch(fullMapInstance);
+  });
+}
+
+/**
+ * ── Map Search Logic ──────────────────────────────────────────
+ */
+function initMapSearch(map) {
+  const input = document.getElementById('mapSearchInput');
+  const resultsDiv = document.getElementById('mapSearchResults');
+  if (!input || !resultsDiv) return;
+
+  let debounceTimer;
+
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const query = input.value.trim();
+    if (query.length < 3) {
+      resultsDiv.style.display = 'none';
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&api_key=${OLA_MAPS_API_KEY}`);
+        const data = await res.json();
+        
+        if (data.predictions && data.predictions.length > 0) {
+          renderSearchResults(data.predictions, map, resultsDiv, input);
+        } else {
+          resultsDiv.innerHTML = '<div style="padding:10px; font-size:.8rem; color:#6e7a71;">No results found</div>';
+          resultsDiv.style.display = 'block';
+        }
+      } catch (err) {
+        console.error("Search error:", err);
+      }
+    }, 300);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
+      resultsDiv.style.display = 'none';
+    }
+  });
+}
+
+function renderSearchResults(predictions, map, resultsDiv, input) {
+  resultsDiv.innerHTML = predictions.map(p => `
+    <div style="padding:10px; cursor:pointer; border-bottom:1px solid #f1f5f9; transition:background .2s;"
+         class="search-result-item"
+         data-place-id="${p.place_id}" data-text="${escHtml(p.description)}">
+      <div style="font-size:.85rem; font-weight:700; color:#121c2a;">${escHtml(p.structured_formatting?.main_text || p.description)}</div>
+      <div style="font-size:.7rem; color:#6e7a71; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escHtml(p.structured_formatting?.secondary_text || '')}</div>
+    </div>
+  `).join('');
+
+  resultsDiv.style.display = 'block';
+
+  resultsDiv.querySelectorAll('.search-result-item').forEach(el => {
+    el.addEventListener('mouseover', () => el.style.background = '#f8f9ff');
+    el.addEventListener('mouseout', () => el.style.background = 'transparent');
+    
+    el.addEventListener('click', async () => {
+      const placeId = el.dataset.placeId;
+      input.value = el.dataset.text;
+      resultsDiv.style.display = 'none';
+
+      try {
+        const res = await fetch(`https://api.olamaps.io/places/v1/details?place_id=${placeId}&api_key=${OLA_MAPS_API_KEY}`);
+        const data = await res.json();
+        
+        if (data.result && data.result.geometry && data.result.geometry.location) {
+          const loc = data.result.geometry.location;
+          map.flyTo({ center: [loc.lng, loc.lat], zoom: 15 });
+          updateLocationLabel(loc.lat, loc.lng);
+        }
+      } catch (err) {
+        console.error("Place details error:", err);
+      }
+    });
   });
 }
 
@@ -447,6 +615,12 @@ function openModal(id) {
   if (!el) return;
   el.classList.add("open");
   document.body.style.overflow = "hidden";
+  if (id === "relocate-modal") {
+    setTimeout(initRelocationMap, 100);
+  }
+  if (id === "history-modal") {
+    // Optional: Refresh or animation
+  }
   if (id === "map-modal") {
     setTimeout(() => {
       fullMapInstance?.resize?.();
@@ -475,6 +649,8 @@ function wireStaticModalButtons() {
   document.getElementById("close-tasks-modal")?.addEventListener("click",() => closeModal("all-tasks-modal"));
   document.getElementById("find-task-btn")?.addEventListener("click",   () => openModal("map-modal"));
   document.getElementById("close-map-modal")?.addEventListener("click", () => closeModal("map-modal"));
+  document.getElementById("close-history-modal")?.addEventListener("click", () => closeModal("history-modal"));
+  document.getElementById("close-relocate-modal")?.addEventListener("click", () => closeModal("relocate-modal"));
 }
 
 
@@ -496,7 +672,7 @@ function initOnlineToggle() {
     isOnline = !isOnline;
     applyToggleState(isOnline, track, thumb, label, wrapper);
     try {
-      await fetch("/api/volunteer/status", {
+      await window.syncManager.queueAction("/api/volunteer/status", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ online: isOnline })
       });
@@ -542,7 +718,12 @@ function initNavDropdown() {
 
 function initKeyboardEscape() {
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { closeModal("all-tasks-modal"); closeModal("map-modal"); }
+    if (e.key === "Escape") { 
+      closeModal("all-tasks-modal"); 
+      closeModal("map-modal"); 
+      closeModal("history-modal");
+      closeModal("relocate-modal");
+    }
   });
 }
 
@@ -644,6 +825,172 @@ function getUrgencyChip(label, score) {
   if (l === "HIGH"     || s >= 6) return { cls: "uc-high", label: "High Urgency" };
   if (l === "MEDIUM"   || s >= 4) return { cls: "uc-mid",  label: "Medium Urgency" };
   return                                  { cls: "uc-low",  label: "Low Urgency" };
+}
+
+// ─────────────────────────────────────────────
+// 18. BACKGROUND TRACKING
+// ─────────────────────────────────────────────
+
+function startBackgroundTracking() {
+  if (!navigator.geolocation) return;
+
+  // Initial update
+  updateCurrentLocation();
+
+  // Every 5 minutes (300000ms)
+  setInterval(updateCurrentLocation, 300000);
+}
+
+async function updateCurrentLocation() {
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const { latitude: lat, longitude: lng } = pos.coords;
+    
+    try {
+      await window.syncManager.queueAction("/api/volunteer/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lat, lng })
+      });
+    } catch (err) {
+      console.warn("[Tracking] Location sync queued");
+    }
+  }, (err) => {
+    console.warn("[Tracking] Geolocation failed", err);
+  }, { enableHighAccuracy: true });
+}
+
+// ─────────────────────────────────────────────
+// 19. RELOCATION LOGIC
+// ─────────────────────────────────────────────
+
+let relocateMapInstance = null;
+let relocateCoords = null;
+
+function initRelocationMap() {
+  if (relocateMapInstance) {
+    relocateMapInstance.resize();
+    return;
+  }
+
+  const olaMaps = new OlaMaps({ apiKey: OLA_MAPS_API_KEY });
+  relocateMapInstance = olaMaps.init({
+    style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
+    container: "relocateMap",
+    center: [77.5946, 12.9716],
+    zoom: 12
+  });
+
+  relocateMapInstance.on('move', () => {
+    const center = relocateMapInstance.getCenter();
+    relocateCoords = { lat: center.lat, lng: center.lng };
+    updateRelocateAddress(center.lat, center.lng);
+  });
+
+  // Search logic for relocation
+  const input = document.getElementById('relocateSearchInput');
+  const resultsDiv = document.getElementById('relocateSearchResults');
+  
+  input.addEventListener('input', () => {
+    const query = input.value.trim();
+    if (query.length < 3) { resultsDiv.style.display = 'none'; return; }
+    
+    clearTimeout(window.relocateSearchTimer);
+    window.relocateSearchTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.olamaps.io/places/v1/autocomplete?input=${query}&api_key=${OLA_MAPS_API_KEY}`);
+        const data = await res.json();
+        renderRelocateResults(data.predictions || []);
+      } catch (err) { console.error("Relocate search error:", err); }
+    }, 400);
+  });
+
+  document.getElementById('confirmRelocateBtn').addEventListener('click', confirmRelocation);
+}
+
+function renderRelocateResults(predictions) {
+  const resultsDiv = document.getElementById('relocateSearchResults');
+  const input = document.getElementById('relocateSearchInput');
+  
+  resultsDiv.innerHTML = predictions.map(p => `
+    <div style="padding:10px; cursor:pointer; border-bottom:1px solid #f1f5f9;"
+         onclick="selectRelocatePlace('${p.place_id}', '${escHtml(p.description)}')">
+      <div style="font-size:0.85rem; font-weight:700;">${escHtml(p.structured_formatting?.main_text || p.description)}</div>
+      <div style="font-size:0.7rem; color:#6e7a71;">${escHtml(p.structured_formatting?.secondary_text || '')}</div>
+    </div>
+  `).join('');
+  resultsDiv.style.display = 'block';
+}
+
+window.selectRelocatePlace = async (placeId, text) => {
+  const input = document.getElementById('relocateSearchInput');
+  const resultsDiv = document.getElementById('relocateSearchResults');
+  input.value = text;
+  resultsDiv.style.display = 'none';
+
+  try {
+    const res = await fetch(`https://api.olamaps.io/places/v1/details?place_id=${placeId}&api_key=${OLA_MAPS_API_KEY}`);
+    const data = await res.json();
+    if (data.result?.geometry?.location) {
+      const loc = data.result.geometry.location;
+      relocateMapInstance.flyTo({ center: [loc.lng, loc.lat], zoom: 15 });
+    }
+  } catch (err) { console.error("Place details error:", err); }
+};
+
+async function updateRelocateAddress(lat, lng) {
+  const addrEl = document.getElementById('relocateAddress');
+  try {
+    const res = await fetch(`https://api.olamaps.io/places/v1/reverse-geocode?latlng=${lat},${lng}&api_key=${OLA_MAPS_API_KEY}`);
+    const data = await res.json();
+    if (data.results && data.results[0]) {
+      addrEl.textContent = data.results[0].formatted_address;
+      addrEl.dataset.city = extractCity(data.results[0].address_components);
+    }
+  } catch {
+    addrEl.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+  }
+}
+
+function extractCity(components) {
+  const cityObj = components.find(c => c.types.includes('locality') || c.types.includes('administrative_area_level_2'));
+  return cityObj ? cityObj.long_name : "Unknown City";
+}
+
+async function confirmRelocation() {
+  if (!relocateCoords) return showToast("Please pick a location on the map", "warning");
+
+  const btn = document.getElementById('confirmRelocateBtn');
+  const addrEl = document.getElementById('relocateAddress');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = "Updating...";
+
+  try {
+    const res = await fetch('/api/volunteer/relocate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lat: relocateCoords.lat,
+        lng: relocateCoords.lng,
+        city: addrEl.dataset.city || "Unknown City",
+        address: addrEl.textContent
+      })
+    });
+    
+    const data = await res.json();
+    if (data.success) {
+      showToast("Base location updated! Refreshing matches...", "success");
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      showToast(data.error || "Update failed", "error");
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  } catch (err) {
+    showToast("Network error", "error");
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
 }
 
 function escHtml(str) {

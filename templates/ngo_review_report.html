@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Review Report | SevaSetu{% endblock %}
+
+{% block head %}
+<style>
+    body { background: #f8f9ff; }
+    .review-card {
+        background: white;
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        box-shadow: 0 20px 50px rgba(0, 108, 68, 0.04);
+        border: 1px solid rgba(0, 108, 68, 0.05);
+    }
+    .sage-gradient {
+        background: linear-gradient(135deg, #006c44 0%, #4caf7d 100%);
+    }
+    .section-label {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #3e4942;
+        opacity: 0.6;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    .proof-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        background: #f0f4f8;
+        border-radius: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="max-w-7xl mx-auto px-6 py-12 pb-32">
+    <!-- Header -->
+    <header class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+        <div>
+            <div class="flex items-center gap-3 mb-4">
+                <span class="px-4 py-1.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[10px] font-black tracking-widest uppercase">
+                    Submitted for Review
+                </span>
+            </div>
+            <h1 class="text-4xl font-black tracking-tight text-on-surface mb-2">Review Completion Report</h1>
+            <p class="text-on-surface-variant font-medium">Validate the impact and work performed by the volunteer.</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-4">
+            <button onclick="handleAction('reject')" class="px-8 py-3.5 rounded-full border-2 border-error/20 text-error font-black text-sm hover:bg-error/5 transition-all">
+                Request Changes
+            </button>
+            <button onclick="handleAction('approve')" class="px-10 py-3.5 rounded-full sage-gradient text-white font-black text-sm shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                Approve Completion
+            </button>
+        </div>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <!-- Main Content -->
+        <div class="lg:col-span-8 space-y-8">
+            <section class="review-card">
+                <h2 class="section-label mb-8">Report Details</h2>
+                <div class="space-y-10">
+                    <div>
+                        <h3 class="font-black text-on-surface mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">description</span>
+                            Description of Work
+                        </h3>
+                        <p class="text-on-surface-variant leading-relaxed font-medium">
+                            {{ report.description }}
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-black text-on-surface mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">analytics</span>
+                            Impact Summary
+                        </h3>
+                        <p class="text-on-surface-variant leading-relaxed font-medium">
+                            {{ report.impact }}
+                        </p>
+                    </div>
+
+                    {% if report.notes %}
+                    <div class="bg-surface-container-low p-6 rounded-2xl border border-emerald-50">
+                        <h3 class="section-label">Additional Notes</h3>
+                        <p class="text-on-surface-variant text-sm font-medium">{{ report.notes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            {% if report.proof_url %}
+            <section class="review-card">
+                <h2 class="section-label mb-6">Verification Evidence</h2>
+                <div class="relative group">
+                    <img src="{{ report.proof_url }}" class="proof-image" alt="Proof of work">
+                    <a href="{{ report.proof_url }}" target="_blank" class="absolute bottom-4 right-4 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-lg text-xs font-bold text-primary flex items-center gap-2 hover:bg-white transition-all">
+                        <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+                        View Full Quality
+                    </a>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="lg:col-span-4 space-y-6">
+            <div class="review-card">
+                <h2 class="section-label mb-8">Submission Info</h2>
+                <div class="space-y-6">
+                    <div class="flex items-center gap-4">
+                        <img src="{{ volunteer.photo_url or 'https://ui-avatars.com/api/?name=' + volunteer.name }}" 
+                             class="w-14 h-14 rounded-2xl object-cover border-4 border-white shadow-sm" alt="Volunteer">
+                        <div>
+                            <p class="section-label mb-0">Volunteer</p>
+                            <p class="font-black text-primary">{{ volunteer.name }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="h-px bg-emerald-50"></div>
+                    
+                    <div>
+                        <p class="section-label">Need</p>
+                        <p class="font-bold text-on-surface">{{ need.title }}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <p class="section-label">Hours</p>
+                            <p class="font-black text-on-surface text-xl">{{ report.hours }} <span class="text-xs font-medium text-on-surface-variant/60">hrs</span></p>
+                        </div>
+                        <div>
+                            <p class="section-label">Date</p>
+                            <p class="font-bold text-on-surface text-sm">
+                                {{ report.submitted_at.strftime('%b %d, %Y') if report.submitted_at and report.submitted_at.strftime else "Recent" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-primary/5 rounded-3xl p-8 border border-primary/10">
+                <div class="flex items-center gap-3 mb-4 text-primary">
+                    <span class="material-symbols-outlined">info</span>
+                    <h3 class="font-black text-sm uppercase tracking-widest">Review Guide</h3>
+                </div>
+                <p class="text-xs text-on-surface-variant font-medium leading-relaxed">
+                    Verify that the photos match the description and the impact aligns with the initial requirements. Approved tasks contribute to the volunteer's community rating.
+                </p>
+            </div>
+        </aside>
+    </div>
+</main>
+
+<script>
+async function handleAction(action) {
+    if (!confirm(`Are you sure you want to ${action} this report?`)) return;
+    
+    try {
+        const res = await fetch("/api/ngo/report/action", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                need_id: "{{ need.id }}",
+                action: action
+            })
+        });
+        
+        if (res.ok) {
+            alert(`Report ${action === 'approve' ? 'approved' : 'returned to in-progress'}.`);
+            window.location.href = "/ngo/dashboard";
+        } else {
+            throw new Error("Action failed");
+        }
+    } catch (err) {
+        alert("Error: " + err.message);
+    }
+}
+</script>
+{% endblock %}

@@ -102,11 +102,9 @@
 <!-- ── MINIMAL NAVBAR ── -->
 <nav class="fixed top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-emerald-50">
   <div class="flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto">
-    <div class="flex items-center gap-2.5">
-      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shadow shadow-primary/25">
-        <span class="material-symbols-outlined text-white" style="font-size:18px;font-variation-settings:'FILL' 1">volunteer_activism</span>
-      </div>
-      <span class="text-xl font-black text-emerald-900 tracking-tighter">SevaSetu</span>
+    <div class="flex items-center gap-2">
+      <img src="{{ url_for('static', filename='images/only_logo.png') }}" alt="Logo" class="h-10 w-auto">
+      <img src="{{ url_for('static', filename='images/text_logo.png') }}" alt="SevaSetu" class="h-8 w-auto">
     </div>
     
     <div class="flex items-center gap-4">
@@ -211,6 +209,24 @@
 
             <div class="space-y-4">
               <label class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">Pin your location</label>
+
+              <!-- Search bar -->
+              <div style="position:relative;">
+                <input type="text" id="ngoLocationSearch"
+                       placeholder="Search city, area, or landmark…"
+                       class="input-field"
+                       style="padding-left:2.5rem;"
+                       autocomplete="off"/>
+                <span class="material-symbols-outlined"
+                      style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                             font-size:18px;color:#6e7a71;">search</span>
+                <!-- Autocomplete dropdown -->
+                <div id="ngoLocationSuggestions"
+                     style="display:none;position:absolute;z-index:100;top:calc(100% + 4px);left:0;right:0;
+                            background:white;border:1px solid rgba(0,108,68,.15);border-radius:12px;
+                            box-shadow:0 8px 24px rgba(0,0,0,.1);overflow:hidden;"></div>
+              </div>
+
               <div id="ngoMap" class="border border-emerald-50"></div>
               <div id="mapTag" class="text-xs font-bold text-primary flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">info</span>

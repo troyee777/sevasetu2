@@ -363,6 +363,25 @@ body::before {
 .view-details-btn:hover { gap: 8px; }
 .view-details-btn .material-symbols-outlined { font-size: 16px; }
 
+/* Work Action Buttons */
+.work-action-btn.start {
+  background: #006c44;
+  color: white;
+}
+.work-action-btn.start:hover {
+  background: #005232;
+  box-shadow: 0 4px 12px rgba(0,108,68,0.25);
+}
+.work-action-btn.pause {
+  background: #fff8ed;
+  color: #855300;
+  border: 1px solid #ffddb8 !important;
+}
+.work-action-btn.pause:hover {
+  background: #ffddb8;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ── 11. FOOTER ─────────────────────────────────────────── */
 .site-footer {
   border-top: 1px solid rgba(0,108,68,.08);
