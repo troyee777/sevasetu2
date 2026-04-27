@@ -187,6 +187,81 @@ function initMap() {
   });
 }
 
+function initLocationSearch() {
+  const input = document.getElementById("locationSearchInput");
+  const suggestions = document.getElementById("locationSuggestions");
+  if (!input || !suggestions) return;
+
+  let debounceTimer;
+  input.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    const query = input.value.trim();
+    if (query.length < 3) {
+      suggestions.style.display = "none";
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&api_key=${OLA_MAPS_API_KEY}`
+        );
+        const data = await res.json();
+        const predictions = data.predictions || [];
+        
+        if (predictions.length > 0) {
+          suggestions.innerHTML = predictions.map(p => `
+            <div class="suggestion-item" 
+                 style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:.85rem;"
+                 data-placeid="${p.place_id}">
+              ${p.description}
+            </div>
+          `).join("");
+          suggestions.style.display = "block";
+
+          suggestions.querySelectorAll(".suggestion-item").forEach(item => {
+            item.addEventListener("click", async () => {
+              const placeId = item.dataset.placeid;
+              input.value = item.textContent.trim();
+              suggestions.style.display = "none";
+              await selectPlace(placeId);
+            });
+          });
+        } else {
+          suggestions.style.display = "none";
+        }
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+      }
+    }, 300);
+  });
+
+  // Close suggestions on click outside
+  document.addEventListener("click", (e) => {
+    if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+      suggestions.style.display = "none";
+    }
+  });
+}
+
+async function selectPlace(placeId) {
+  if (!OLA_MAPS_API_KEY) return;
+  try {
+    const res = await fetch(
+      `https://api.olamaps.io/places/v1/details?place_id=${placeId}&api_key=${OLA_MAPS_API_KEY}`
+    );
+    const data = await res.json();
+    if (data.result && data.result.geometry && data.result.geometry.location) {
+      const { lat, lng } = data.result.geometry.location;
+      updateLocation(lat, lng);
+      mapInstance?.flyTo({ center: [lng, lat], zoom: 15 });
+      markerInstance?.setLngLat([lng, lat]);
+    }
+  } catch (err) {
+    console.error("Place details error:", err);
+  }
+}
+
 function updateLocation(lat, lng) {
   selectedLat = lat;
   selectedLng = lng;
@@ -211,9 +286,12 @@ async function reverseGeocode(lat, lng) {
       );
       const mapTag = document.getElementById("mapLocationTag");
       if (mapTag) {
-        mapTag.textContent = city
-          ? `📍 ${city.long_name}`
-          : `📍 ${results[0].formatted_address?.split(",")[0] || "Location selected"}`;
+        if (city) {
+          mapTag.innerHTML = `📍 <strong>${city.long_name}</strong>`;
+        } else {
+          const addr = results[0].formatted_address?.split(",")[0] || "Location selected";
+          mapTag.innerHTML = `📍 ${addr}`;
+        }
       }
     }
   } catch (err) {
@@ -361,6 +439,13 @@ function restoreDraft() {
       selectedLng = d.lng;
       document.getElementById("latitude").value  = d.lat;
       document.getElementById("longitude").value = d.lng;
+      
+      // If map is already init, move it
+      if (mapInstance && markerInstance) {
+        mapInstance.setCenter([selectedLng, selectedLat]);
+        markerInstance.setLngLat([selectedLng, selectedLat]);
+      }
+      reverseGeocode(selectedLat, selectedLng);
     }
   } catch {}
 }
@@ -372,8 +457,9 @@ function restoreDraft() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadOlaMapsKey();
-  initMap();
-  restoreDraft();
+  restoreDraft(); // Load values first
+  initMap();      // Init map with loaded values
+  initLocationSearch();
 });
 
 

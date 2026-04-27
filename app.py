@@ -12,6 +12,8 @@ from services import imagekit_services,firebase_services,gemini_service,matching
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key-change-in-prod")
+from datetime import timedelta
+app.permanent_session_lifetime = timedelta(days=30)
 
 from flask_socketio import SocketIO, join_room, leave_room, emit
 # Vercel serverless does NOT support WebSockets (no persistent connections).
@@ -681,6 +683,62 @@ def api_volunteer_complete_task(task_id):
 
 
 # ══════════════════════════════════════════════
+# VOLUNTEER WORK TRACKING
+# ══════════════════════════════════════════════
+
+@app.route("/api/volunteer/work/start", methods=["POST"])
+def api_volunteer_work_start():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    uid  = session["user"]["uid"]
+    data = request.json or {}
+    task_id = data.get("task_id")  # this is the match_id
+    
+    if not task_id:
+        return jsonify({"error": "Task ID required"}), 400
+        
+    firebase_services.start_work_session(task_id, uid)
+    return jsonify({"success": True})
+
+
+@app.route("/api/volunteer/work/pause", methods=["POST"])
+def api_volunteer_work_pause():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    uid  = session["user"]["uid"]
+    data = request.json or {}
+    task_id     = data.get("task_id")
+    comment     = data.get("comment", "")
+    duration_ms = data.get("duration_ms", 0)
+    
+    if not task_id:
+        return jsonify({"error": "Task ID required"}), 400
+        
+    firebase_services.pause_work_session(task_id, uid, comment, duration_ms)
+    return jsonify({"success": True})
+
+
+@app.route("/api/volunteer/work/location", methods=["POST"])
+def api_volunteer_work_location():
+    if not session.get("user"):
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    uid  = session["user"]["uid"]
+    data = request.json or {}
+    task_id = data.get("task_id")
+    lat     = data.get("lat")
+    lng     = data.get("lng")
+    
+    if not task_id or lat is None or lng is None:
+        return jsonify({"error": "Missing params"}), 400
+        
+    firebase_services.update_task_location(task_id, uid, lat, lng)
+    return jsonify({"success": True})
+
+
+# ══════════════════════════════════════════════
 # VOLUNTEER ONLINE STATUS
 # ══════════════════════════════════════════════
 
@@ -754,6 +812,7 @@ def firebase_login():
             "email":    email,
             "role":     role_to_save
         }
+        session.permanent = True
 
         if role_to_save == "ngo":
             return jsonify({"status": "new", "redirect": "/ngo/onboarding"})
@@ -771,6 +830,7 @@ def firebase_login():
         "email":    email,
         "role":     role
     }
+    session.permanent = True
 
     if role == "ngo":
         return jsonify({"status": "existing", "redirect": "/ngo/dashboard"})
@@ -1481,28 +1541,39 @@ def api_get_all_ngos():
         return jsonify({"error": "Unauthorized"}), 401
     
     db = firebase_services.get_db()
+    
+    # 1. Fetch all NGOs
     ngo_docs = db.collection("ngos").stream()
+    
+    # 2. Get counts for needs and matches in a more efficient way
+    # Ideally, these are stored on the NGO doc, but if not, let's optimize
+    # We'll fetch the IDs and ngo_ids only to minimize data transfer
+    needs_docs = db.collection("needs").select(["ngo_id"]).stream()
+    matches_docs = db.collection("matches").select(["ngo_id"]).stream()
+    
+    needs_map = {}
+    for doc in needs_docs:
+        nid = doc.to_dict().get("ngo_id")
+        if nid: needs_map[nid] = needs_map.get(nid, 0) + 1
+        
+    matches_map = {}
+    for doc in matches_docs:
+        mid = doc.to_dict().get("ngo_id")
+        if mid: matches_map[mid] = matches_map.get(mid, 0) + 1
     
     ngos = []
     for doc in ngo_docs:
         d = doc.to_dict()
         d["id"] = doc.id
         
-        # Add stats if missing
-        if "needs" not in d:
-            # Count needs for this NGO
-            needs_count = len(list(db.collection("needs").where("ngo_id", "==", doc.id).stream()))
-            d["needs"] = needs_count
-        
-        if "matches" not in d:
-            # Count matches for this NGO
-            matches_count = len(list(db.collection("matches").where("ngo_id", "==", doc.id).stream()))
-            d["matches"] = matches_count
+        # Use existing count or from our optimized maps
+        d["needs"] = d.get("needs", needs_map.get(doc.id, 0))
+        d["matches"] = d.get("matches", matches_map.get(doc.id, 0))
             
         # Format createdAt
         ts = d.get("createdAt")
         if ts and hasattr(ts, "timestamp"):
-            d["joined"] = ts.strftime("%b %Y")
+            d["joined"] = ts.strftime("%b %d, %Y")
             d["createdAt"] = {"_seconds": int(ts.timestamp())}
         else:
             d["joined"] = "N/A"

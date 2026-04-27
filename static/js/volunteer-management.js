@@ -138,108 +138,75 @@ document.addEventListener("DOMContentLoaded", () => {
     // RENDER CARDS
     // =====================
     function renderVolunteers(data) {
-
         container.innerHTML = "";
 
-        if (!data.length) {
-            container.innerHTML = `<p>No volunteers found</p>`;
+        if (!data || !data.length) {
+            container.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-20 text-gray-400">
+                    <span class="material-symbols-outlined text-6xl mb-4">person_search</span>
+                    <p class="text-lg font-medium">No volunteers found</p>
+                </div>`;
             return;
         }
 
         data.forEach(vol => {
-
             const card = document.createElement("div");
+            card.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-green-100 transition-all duration-300 flex flex-col gap-4 group";
 
-            card.className = "bg-white p-6 rounded-xl shadow hover:shadow-lg";
+            const skills = Array.isArray(vol.skills) ? vol.skills : [];
+            const skillsHtml = skills.slice(0, 3).map(skill => `
+                <span class="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded-lg border border-green-100">
+                    ${skill}
+                </span>
+            `).join("");
 
-card.innerHTML = `
-<div class="bg-white rounded-2xl p-5 shadow-md hover:shadow-xl transition-all flex flex-col gap-4">
-
-    <!-- TOP -->
-    <div class="flex items-start justify-between">
-        <div class="flex gap-3">
-            <div class="relative">
-                <img src="${vol.image || '/static/images/avatar.png'}"
-                     onerror="this.src='/static/images/avatar.png'"
-                     class="w-14 h-14 rounded-full object-cover"/>
-
-                <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-            </div>
-
-            <div>
-                <h3 class="font-bold text-sm">${vol.name}</h3>
-                <p class="text-xs text-gray-500">${vol.email}</p>
-                <p class="text-xs text-gray-500">${vol.joined}</p>
-                <!-- ⭐ RATING -->
-                <div class="flex items-center gap-1 text-yellow-500 text-xs mt-1">
-                    <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">star</span>
-                    <span>${vol.rating || 0.0}</span>
+            card.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex gap-4">
+                        <div class="relative">
+                            <img src="${vol.image || '/static/images/avatar.png'}" 
+                                 onerror="this.src='/static/images/avatar.png'"
+                                 class="w-14 h-14 rounded-2xl object-cover shadow-sm group-hover:scale-105 transition-transform"/>
+                            <div class="absolute -bottom-1 -right-1 w-4 h-4 ${vol.status === 'Active' ? 'bg-green-500' : 'bg-amber-500'} border-2 border-white rounded-full"></div>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-slate-800 group-hover:text-green-700 transition-colors">${vol.name || 'Anonymous'}</h3>
+                            <p class="text-[11px] text-gray-400 font-medium">${vol.email || 'No email'}</p>
+                            <div class="flex items-center gap-1 mt-1">
+                                <span class="material-symbols-outlined text-[14px] text-yellow-500" style="font-variation-settings:'FILL' 1">star</span>
+                                <span class="text-[11px] font-bold text-gray-600">${vol.rating || '0.0'}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- LOCATION -->
-    <div class="flex items-center gap-2 text-gray-500 text-xs">
-        <span class="material-symbols-outlined text-sm">location_on</span>
-        ${vol.city}
-    </div>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2 text-gray-500 text-xs font-medium">
+                        <span class="material-symbols-outlined text-sm text-green-600">location_on</span>
+                        ${vol.city || 'India'}
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${skillsHtml}
+                        ${skills.length > 3 ? `<span class="text-[10px] text-gray-400 font-bold px-1">+${skills.length - 3}</span>` : ''}
+                        ${skills.length === 0 ? '<span class="text-[10px] text-gray-300 italic">No skills listed</span>' : ''}
+                    </div>
+                </div>
 
-    <!-- SKILLS -->
-    <div class="flex flex-wrap gap-2">
-        ${vol.skills.map(skill => `
-            <span class="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
-                ${skill}
-            </span>
-        `).join("")}
-    </div>
+                <div class="grid grid-cols-2 gap-2 mt-auto">
+                    <button class="viewBtn bg-slate-50 hover:bg-slate-100 text-slate-600 py-2.5 rounded-xl text-xs font-bold transition-all">
+                        View
+                    </button>
+                    <button class="assignBtn bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm shadow-green-100">
+                        Assign
+                    </button>
+                </div>
+            `;
 
-    <!-- STATS -->
-    <div class="grid grid-cols-2 gap-2 bg-gray-100 p-3 rounded-xl text-xs">
-        <div>
-            <p class="text-gray-400 text-[10px]">Availability</p>
-            <p class="font-bold">${vol.availability}</p>
-        </div>
-        <div>
-            <p class="text-gray-400 text-[10px]">Tasks</p>
-            <p class="font-bold">${vol.tasks}</p>
-        </div>
-    </div>
-
-    <!-- STATUS -->
-    <div class="text-xs font-semibold ${vol.status === "Active" ? "text-green-600" : "text-orange-500"}">
-        ${vol.status}
-    </div>
-
-    <!-- BUTTONS -->
-    <div class="flex gap-2 pt-2 border-t">
-        <button class="viewBtn flex-1 bg-gray-200 py-2 rounded-full text-xs font-bold">
-            View
-        </button>
-        <button class="assignBtn flex-1 bg-green-600 text-white py-2 rounded-full text-xs font-bold">
-          Assign
-        </button>
-    </div>
-
-</div>
-`;
-// ADD EVENT LISTENER:
-card.querySelector(".assignBtn").addEventListener("click", async () => {
-    try {
-        await fetch(`/api/volunteers/${vol.id}/assign`, {
-            method: "POST"
-        });
-
-        showToast("Task Assigned ✅");
-
-    } catch (err) {
-        console.error(err);
-    }
-});
-
-  // 👉 OPEN SIDEBAR
-            card.querySelector(".viewBtn").addEventListener("click", () => {
-                openDetails(vol);
+            card.querySelector(".viewBtn").addEventListener("click", () => openDetails(vol));
+            card.querySelector(".assignBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                selectedVolunteer = vol;
+                document.getElementById("assignBtn")?.click(); 
             });
 
             container.appendChild(card);
@@ -335,37 +302,30 @@ function updatePendingCount(data) {
     // OPEN SIDEBAR
     // =====================
     function openDetails(vol) {
+        selectedVolunteer = vol;
 
-    selectedVolunteer = vol;
+        detailsPanel.classList.remove("hidden");
+        container.classList.add("pr-[360px]", "lg:grid-cols-2");
 
-    detailsPanel.classList.remove("hidden");
+        document.getElementById("volName").textContent = vol.name || "Anonymous";
+        document.getElementById("volEmail").textContent = vol.email || "No email";
+        document.getElementById("volPhone").textContent = vol.phone || "Not provided";
+        document.getElementById("volCity").textContent = vol.city || "N/A";
+        document.getElementById("volJoined").textContent = vol.joined || "N/A";
+        document.getElementById("volImage").src = vol.image || "/static/images/avatar.png";
 
-    container.classList.add("pr-[360px]", "lg:grid-cols-2");
-
-    document.getElementById("volName").textContent = vol.name;
-    document.getElementById("volEmail").textContent = vol.email;
-    document.getElementById("volPhone").textContent = vol.phone;
-    document.getElementById("volCity").textContent = vol.city;
-    document.getElementById("volJoined").textContent =
-    vol.joined || "N/A";
-    document.getElementById("volImage").src =
-        vol.image && vol.image !== "" ? vol.image : "/static/images/avatar.png";
-
-    // ✅ SKILLS FROM JS ONLY
-    const skillsContainer = document.getElementById("volSkills");
-
-if (!vol.skills || vol.skills.length === 0) {
-    skillsContainer.innerHTML = `
-        <span class="text-xs text-gray-400">No skills added</span>
-    `;
-} else {
-    skillsContainer.innerHTML = vol.skills.map(skill => `
-        <span class="px-3 py-1.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full shadow-sm">
-            ${skill}
-        </span>
-    `).join("");
-}
-}
+        const skillsContainer = document.getElementById("volSkills");
+        const skills = Array.isArray(vol.skills) ? vol.skills : [];
+        if (skills.length === 0) {
+            skillsContainer.innerHTML = `<span class="text-xs text-gray-400 italic">No skills added</span>`;
+        } else {
+            skillsContainer.innerHTML = skills.map(skill => `
+                <span class="px-3 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-xl border border-green-100 shadow-sm">
+                    ${skill}
+                </span>
+            `).join("");
+        }
+    }
 // 1. APPROVE BUTTON
 document.getElementById("approveBtn").addEventListener("click", async () => {
 

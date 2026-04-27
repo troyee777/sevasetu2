@@ -67,6 +67,80 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function initLocationSearch() {
+    const input = document.getElementById("ngoLocationSearch");
+    const suggestions = document.getElementById("ngoLocationSuggestions");
+    if (!input || !suggestions) return;
+
+    let debounceTimer;
+    input.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      const query = input.value.trim();
+      if (query.length < 3) {
+        suggestions.style.display = "none";
+        return;
+      }
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(
+            `https://api.olamaps.io/places/v1/autocomplete?input=${encodeURIComponent(query)}&api_key=${OLA_MAPS_API_KEY}`
+          );
+          const data = await res.json();
+          const predictions = data.predictions || [];
+          
+          if (predictions.length > 0) {
+            suggestions.innerHTML = predictions.map(p => `
+              <div class="suggestion-item" 
+                   style="padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;font-size:.85rem;"
+                   data-placeid="${p.place_id}">
+                ${p.description}
+              </div>
+            `).join("");
+            suggestions.style.display = "block";
+
+            suggestions.querySelectorAll(".suggestion-item").forEach(item => {
+              item.addEventListener("click", async () => {
+                const placeId = item.dataset.placeid;
+                input.value = item.textContent.trim();
+                suggestions.style.display = "none";
+                await selectPlace(placeId);
+              });
+            });
+          } else {
+            suggestions.style.display = "none";
+          }
+        } catch (err) {
+          console.error("Autocomplete error:", err);
+        }
+      }, 300);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+        suggestions.style.display = "none";
+      }
+    });
+  }
+
+  async function selectPlace(placeId) {
+    if (!OLA_MAPS_API_KEY) return;
+    try {
+      const res = await fetch(
+        `https://api.olamaps.io/places/v1/details?place_id=${placeId}&api_key=${OLA_MAPS_API_KEY}`
+      );
+      const data = await res.json();
+      if (data.result && data.result.geometry && data.result.geometry.location) {
+        const { lat, lng } = data.result.geometry.location;
+        updateLocation(lat, lng);
+        mapInstance?.flyTo({ center: [lng, lat], zoom: 15 });
+        markerInstance?.setLngLat([lng, lat]);
+      }
+    } catch (err) {
+      console.error("Place details error:", err);
+    }
+  }
+
   function updateLocation(lat, lng) {
     selectedLat = lat;
     selectedLng = lng;
@@ -140,6 +214,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   initMap();
+  initLocationSearch();
 
   // ── 3. LOGO UPLOAD & PREVIEW ──
   const logoInput = document.getElementById("logoInput");

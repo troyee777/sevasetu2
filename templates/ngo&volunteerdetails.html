@@ -216,6 +216,58 @@
     .modal-msg { font-size: .875rem; color: var(--on-sv); line-height: 1.6; margin-bottom: 24px; }
     .modal-actions { display: flex; gap: 10px; }
     .modal-actions .btn { flex: 1; }
+
+    /* ── WORK TRACKER PANEL ── */
+    .tracker-panel {
+      background: linear-gradient(135deg, #f0faf5 0%, #ffffff 100%);
+      border: 1px solid rgba(0,108,68,.14);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 4px;
+    }
+    .tracker-header { display:flex;align-items:center;gap:8px;margin-bottom:14px; }
+    .tracker-timer-wrap { text-align:center;margin-bottom:14px; }
+    .tracker-clock {
+      font-size: 2.4rem; font-weight: 800; letter-spacing: .04em;
+      color: var(--on-surface); font-variant-numeric: tabular-nums;
+      font-feature-settings: 'tnum';
+      transition: color .3s;
+    }
+    .tracker-clock.running { color: var(--primary); }
+    .tracker-status { font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6e7a71;margin-top:2px; }
+    .tracker-btn {
+      background: var(--primary); color: white;
+      transition: background .2s, transform .1s;
+    }
+    .tracker-btn:hover:not(:disabled) { background:#005232; }
+    .tracker-btn.pausing { background: #d97706; }
+    .tracker-btn:active { transform: scale(.97); }
+    .tracker-milestone { margin-top: 12px; }
+    .tracker-milestone-label { font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--on-sv);opacity:.5;margin-bottom:6px; }
+    .tracker-milestone-input {
+      flex:1;padding:8px 12px;border-radius:10px;border:1.5px solid var(--outline);
+      font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;
+      outline:none;transition:border-color .2s;
+    }
+    .tracker-milestone-input:focus { border-color:var(--primary); }
+    .tracker-log-btn {
+      padding:8px 14px;border-radius:10px;background:rgba(0,108,68,.1);
+      color:var(--primary);font-size:.82rem;font-weight:700;flex-shrink:0;width:auto;
+    }
+    .tracker-log-btn:hover { background:rgba(0,108,68,.18); }
+    .tracker-location {
+      display:flex;align-items:center;gap:6px;margin-top:10px;
+      background:rgba(0,108,68,.05);padding:6px 10px;border-radius:8px;
+    }
+    .tracker-log {
+      margin-top:10px;max-height:120px;overflow-y:auto;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .tracker-log-item {
+      background:white;border:1px solid rgba(0,108,68,.08);border-radius:8px;
+      padding:8px 10px;font-size:.78rem;color:#3e4942;
+    }
+    .tracker-log-item .log-time { font-size:.68rem;color:#6e7a71;margin-top:2px; }
   </style>
 </head>
 <body>
@@ -455,10 +507,26 @@
               <span class="material-symbols-outlined" style="font-size:18px">chat</span>
               Chat with Volunteer
             </button>
+
+            <!-- NGO Live Tracking Map -->
+            <div id="ngoLiveMapWrap" style="margin-top:14px; display:none;">
+              <p class="section-label" style="margin-bottom:8px;">Live Volunteer Location</p>
+              <div id="ngoLiveMap" style="height:180px; width:100%; border-radius:12px; border:1px solid rgba(0,108,68,.1);"></div>
+              <p id="ngoLiveStatus" style="font-size:.7rem; color:#6e7a71; margin-top:6px; text-align:center;">Fetching location...</p>
+            </div>
+
             <button class="btn btn-danger" style="margin-top:8px;" onclick="confirmUnassign()">
               <span class="material-symbols-outlined" style="font-size:18px">person_remove</span>
               Unassign Volunteer
             </button>`;
+
+          // Start polling for location if task is in progress
+          if (status === 'in_progress') {
+            setTimeout(() => {
+              document.getElementById('ngoLiveMapWrap').style.display = 'block';
+              initNgoLiveMap();
+            }, 100);
+          }
         } else if (status === "open") {
           html += `
             <div style="text-align:center;padding:20px 0;">
@@ -497,14 +565,46 @@
         // This volunteer is the assigned one
         if (status === "assigned" || status === "in_progress") {
           html += `
-            <div style="background:#f0faf5;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid rgba(0,108,68,.12);">
-              <p style="font-size:.8rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:6px;">
-                <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1">check_circle</span>
-                You are assigned to this task
-              </p>
-              <p style="font-size:.75rem;color:#3e4942;margin-top:4px;">Please complete the task and submit a proof photo.</p>
+            <!-- ── WORK TRACKER PANEL ── -->
+            <div class="tracker-panel" id="trackerPanel">
+              <div class="tracker-header">
+                <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px;font-variation-settings:'FILL' 1">timer</span>
+                <span style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--on-sv);opacity:.5;">Work Tracker</span>
+              </div>
+
+              <!-- Timer display -->
+              <div class="tracker-timer-wrap">
+                <div class="tracker-clock" id="trackerClock">00:00:00</div>
+                <div class="tracker-status" id="trackerStatus">Not started</div>
+              </div>
+
+              <!-- Start / Pause toggle -->
+              <button class="btn tracker-btn" id="trackerToggleBtn" onclick="toggleWorkSession()">
+                <span class="material-symbols-outlined" style="font-size:18px" id="trackerBtnIcon">play_arrow</span>
+                <span id="trackerBtnLabel">Start Work</span>
+              </button>
+
+              <!-- Milestone comment -->
+              <div class="tracker-milestone" id="trackerMilestoneWrap" style="display:none;">
+                <div class="tracker-milestone-label">Add Milestone Note</div>
+                <div style="display:flex;gap:8px;">
+                  <input type="text" id="milestoneInput" placeholder="e.g. Distributed food packets…" class="tracker-milestone-input"/>
+                  <button class="btn tracker-log-btn" onclick="logMilestone()">Log</button>
+                </div>
+              </div>
+
+              <!-- Location status -->
+              <div class="tracker-location" id="trackerLocation" style="display:none;">
+                <span class="material-symbols-outlined" style="font-size:14px;color:var(--primary);">location_on</span>
+                <span id="trackerLocationText" style="font-size:.75rem;color:#3e4942;">Acquiring location…</span>
+              </div>
+
+              <!-- Milestone log -->
+              <div class="tracker-log" id="trackerLog"></div>
             </div>
-            <a href="/volunteer/task/complete/${NEED_ID}" class="btn btn-success" style="text-decoration:none;">
+
+            <!-- Complete + Chat -->
+            <a href="/volunteer/task/complete/${NEED_ID}" class="btn btn-success" style="text-decoration:none;margin-top:10px;">
               <span class="material-symbols-outlined" style="font-size:18px">task_alt</span>
               Mark as Complete
             </a>
@@ -512,6 +612,9 @@
               <span class="material-symbols-outlined" style="font-size:18px">chat</span>
               Chat with NGO
             </button>`;
+
+          // Boot tracker after card renders
+          setTimeout(initTracker, 50);
         } else if (status === "in_review") {
           html += `
             <div style="text-align:center;padding:20px 0;">
@@ -641,6 +744,286 @@
 
     function esc(s) {
       return String(s||"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+    }
+
+    // ══════════════════════════════════════════════════
+    // WORK TRACKER — timer + live location sync
+    // ══════════════════════════════════════════════════
+    let _timerInterval  = null;
+    let _elapsedSeconds = 0;
+    let _isRunning      = false;
+    let _locationWatchId = null;
+    let _locationQueue  = [];          // offline retry queue
+    let _lastLat = null, _lastLng = null;
+    const LOC_THRESHOLD_KM = 0.1;     // only push if moved >100 m
+
+    // ── haversine distance (km) ──────────────────────
+    function _haversine(lat1, lng1, lat2, lng2) {
+      const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // ── format seconds as HH:MM:SS ──────────────────
+    function _fmt(s) {
+      const h = String(Math.floor(s/3600)).padStart(2,'0');
+      const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+      const sc = String(s%60).padStart(2,'0');
+      return `${h}:${m}:${sc}`;
+    }
+
+    // ── restore timer from localStorage ─────────────
+    function _restoreTimer() {
+      const key = `tracker_${NEED_ID}`;
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) || 'null');
+        if (saved && saved.running && saved.startEpoch) {
+          _elapsedSeconds = saved.elapsed + Math.floor((Date.now() - saved.startEpoch) / 1000);
+          return true;  // was running
+        } else if (saved) {
+          _elapsedSeconds = saved.elapsed || 0;
+        }
+      } catch {}
+      return false;
+    }
+
+    // ── persist timer state ──────────────────────────
+    function _saveTimer(running) {
+      const key = `tracker_${NEED_ID}`;
+      localStorage.setItem(key, JSON.stringify({
+        elapsed: _elapsedSeconds,
+        running,
+        startEpoch: running ? Date.now() : null
+      }));
+    }
+
+    // ── init tracker on DOM ready ────────────────────
+    function initTracker() {
+      const wasRunning = _restoreTimer();
+      _updateClockUI();
+      if (wasRunning) _startTimer();
+    }
+
+    // ── toggle start / pause ─────────────────────────
+    async function toggleWorkSession() {
+      const btn   = document.getElementById("trackerToggleBtn");
+      const icon  = document.getElementById("trackerBtnIcon");
+      const label = document.getElementById("trackerBtnLabel");
+      btn.disabled = true;
+
+      if (!_isRunning) {
+        // --- START ---
+        try {
+          const res = await fetch("/api/volunteer/work/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ need_id: NEED_ID })
+          });
+          if (!res.ok) throw new Error(await res.text());
+        } catch (err) {
+          showToast("Could not start session: " + err.message, "error");
+          btn.disabled = false;
+          return;
+        }
+        _startTimer();
+        icon.textContent  = "pause";
+        label.textContent = "Pause Work";
+        btn.classList.add("pausing");
+        document.getElementById("trackerStatus").textContent = "Session active";
+        document.getElementById("trackerMilestoneWrap").style.display = "block";
+        document.getElementById("trackerLocation").style.display     = "flex";
+        _startLocationSync();
+        showToast("Work session started ✅", "success");
+
+      } else {
+        // --- PAUSE ---
+        try {
+          const res = await fetch("/api/volunteer/work/pause", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ need_id: NEED_ID, elapsed: _elapsedSeconds })
+          });
+          if (!res.ok) throw new Error(await res.text());
+        } catch (err) {
+          showToast("Could not pause session: " + err.message, "error");
+          btn.disabled = false;
+          return;
+        }
+        _pauseTimer();
+        icon.textContent  = "play_arrow";
+        label.textContent = "Resume Work";
+        btn.classList.remove("pausing");
+        document.getElementById("trackerStatus").textContent = "Paused";
+        _stopLocationSync();
+        showToast("Session paused", "success");
+      }
+
+      btn.disabled = false;
+    }
+
+    function _startTimer() {
+      _isRunning = true;
+      _saveTimer(true);
+      document.getElementById("trackerClock").classList.add("running");
+      _timerInterval = setInterval(() => {
+        _elapsedSeconds++;
+        _updateClockUI();
+        if (_elapsedSeconds % 30 === 0) _saveTimer(true); // auto-save every 30 s
+      }, 1000);
+    }
+
+    function _pauseTimer() {
+      _isRunning = false;
+      clearInterval(_timerInterval);
+      _timerInterval = null;
+      _saveTimer(false);
+      document.getElementById("trackerClock").classList.remove("running");
+    }
+
+    function _updateClockUI() {
+      const el = document.getElementById("trackerClock");
+      if (el) el.textContent = _fmt(_elapsedSeconds);
+    }
+
+    // ── milestone log ────────────────────────────────
+    async function logMilestone() {
+      const input = document.getElementById("milestoneInput");
+      const comment = input?.value.trim();
+      if (!comment) { showToast("Please enter a milestone comment.", "error"); return; }
+
+      try {
+        const res = await fetch("/api/volunteer/work/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ need_id: NEED_ID, comment, elapsed: _elapsedSeconds })
+        });
+        // We reuse start endpoint to log — backend handles idempotency
+      } catch {}
+
+      // Render locally
+      const log  = document.getElementById("trackerLog");
+      const item = document.createElement("div");
+      item.className = "tracker-log-item";
+      const now = new Date();
+      item.innerHTML = `<div>${esc(comment)}</div><div class="log-time">${_fmt(_elapsedSeconds)} · ${now.toLocaleTimeString()}</div>`;
+      log.prepend(item);
+      input.value = "";
+      showToast("Milestone logged ✅", "success");
+    }
+
+    // ── live location sync ───────────────────────────
+    function _startLocationSync() {
+      if (!navigator.geolocation) return;
+      _locationWatchId = navigator.geolocation.watchPosition(
+        (pos) => syncLocation(pos.coords.latitude, pos.coords.longitude),
+        (err) => console.warn("Geo error:", err),
+        { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+      );
+      // Also flush any queued updates
+      _flushLocationQueue();
+    }
+
+    function _stopLocationSync() {
+      if (_locationWatchId !== null) {
+        navigator.geolocation.clearWatch(_locationWatchId);
+        _locationWatchId = null;
+      }
+    }
+
+    async function syncLocation(lat, lng) {
+      // Threshold check — only push if moved >100 m
+      if (_lastLat !== null && _haversine(_lastLat, _lastLng, lat, lng) < LOC_THRESHOLD_KM) return;
+
+      _lastLat = lat; _lastLng = lng;
+
+      // Update status text
+      const locText = document.getElementById("trackerLocationText");
+      if (locText) locText.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+
+      try {
+        const res = await fetch("/api/volunteer/work/location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ need_id: NEED_ID, lat, lng })
+        });
+        if (!res.ok) throw new Error("Location push failed");
+        // On success, flush any queued items
+        _flushLocationQueue();
+      } catch {
+        // Offline — queue for retry
+        _locationQueue.push({ lat, lng, ts: Date.now() });
+        if (locText) locText.textContent += " (queued)";
+      }
+    }
+
+    async function _flushLocationQueue() {
+      while (_locationQueue.length > 0) {
+        const item = _locationQueue[0];
+        try {
+          const res = await fetch("/api/volunteer/work/location", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ need_id: NEED_ID, lat: item.lat, lng: item.lng })
+          });
+          if (!res.ok) break; // still offline
+          _locationQueue.shift();
+        } catch { break; }
+      }
+    }
+
+    // ── NGO Live Tracking Map ────────────────────────
+    let _ngoMapInstance = null;
+    let _ngoMarkerInstance = null;
+    let _ngoPollInterval = null;
+
+    async function initNgoLiveMap() {
+      // 1. Get API Key
+      const keyRes = await fetch("/api/get_ola_maps_key");
+      const { OLA_MAPS_API_KEY } = await keyRes.json();
+      if (!OLA_MAPS_API_KEY) return;
+
+      const olaMaps = new OlaMaps({ apiKey: OLA_MAPS_API_KEY });
+      
+      // We'll initialize with task location first
+      _ngoMapInstance = olaMaps.init({
+        style: "https://api.olamaps.io/tiles/vector/v1/styles/default-light-standard/style.json",
+        container: "ngoLiveMap",
+        center: [0, 0], // placeholders
+        zoom: 14
+      });
+
+      _ngoMapInstance.on('load', () => {
+        // Poll for volunteer location
+        _pollVolunteerLocation();
+        _ngoPollInterval = setInterval(_pollVolunteerLocation, 30000); // 30s
+      });
+    }
+
+    async function _pollVolunteerLocation() {
+      try {
+        const res = await fetch(`/api/need/${NEED_ID}`);
+        const data = await res.json();
+        const vLoc = data.need.volunteer_location; // assuming this is where it's stored in the flattened view
+        
+        if (vLoc && vLoc.lat && vLoc.lng) {
+          if (!_ngoMarkerInstance) {
+            const el = document.createElement("div");
+            el.style.cssText = "width:24px;height:24px;background:#006c44;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.2);";
+            _ngoMarkerInstance = new OlaMaps.Marker({ element: el })
+              .setLngLat([vLoc.lng, vLoc.lat])
+              .addTo(_ngoMapInstance);
+            _ngoMapInstance.setCenter([vLoc.lng, vLoc.lat]);
+          } else {
+            _ngoMarkerInstance.setLngLat([vLoc.lng, vLoc.lat]);
+          }
+          
+          document.getElementById('ngoLiveStatus').textContent = `Last seen: ${new Date(vLoc.updated_at).toLocaleTimeString()}`;
+        } else {
+          document.getElementById('ngoLiveStatus').textContent = "Waiting for volunteer to start work...";
+        }
+      } catch (err) {
+        console.warn("Poll error:", err);
+      }
     }
   </script>
 </body>

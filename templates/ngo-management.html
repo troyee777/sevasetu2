@@ -442,86 +442,107 @@
 
 
 <!-- Detail Side Panel -->
-<aside id="detailsPanel" class="hidden w-[30%] h-full bg-white border-l flex-col transition-all duration-300">
+<aside id="detailsPanel" class="hidden fixed top-0 right-0 w-[400px] h-full bg-white border-l shadow-2xl flex-col z-50 transition-all duration-300">
     <!-- HEADER -->
-    <div class="p-6 border-b border-surface-container-low flex justify-between items-center">
-        <button id="closeDetailsBtn" class="p-2 hover:bg-surface-container rounded-full">
+    <div class="px-6 py-5 border-b border-surface-container-low flex justify-between items-center bg-surface-container-lowest">
+        <h2 class="text-lg font-bold text-on-surface">Organization Details</h2>
+        <button id="closeDetailsBtn" class="w-10 h-10 flex items-center justify-center hover:bg-surface-container rounded-full transition-colors">
             <span class="material-symbols-outlined">close</span>
         </button>
-
-        <div class="flex gap-2">
-            <button id="chatBtn" class="px-4 py-2 rounded-full bg-primary text-white text-sm font-bold flex items-center gap-2">
-                <span class="material-symbols-outlined text-[18px]">chat</span> Chat
-            </button>
-            <button id="editBtn" class="px-4 py-2 rounded-full border text-sm font-bold">
-                Edit
-            </button>
-            <button id="suspendBtn" class="px-4 py-2 rounded-full border border-red-500 text-red-500 text-sm font-bold">
-                Suspend
-            </button>
-        </div>
     </div>
 
     <!-- BODY -->
-    <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
 
-        <!-- PROFILE -->
-        <div class="flex flex-col items-center text-center mb-6">
-            <img id="ngoLogo" class="w-24 h-24 rounded-xl object-cover mb-3" src="https://via.placeholder.com/100" />
-
-            <h3 id="ngoName" class="text-lg font-bold">NGO Name</h3>
-            <p id="ngoEmail" class="text-sm text-gray-500">email@ngo.com</p>
-            <p id="ngoCity" class="text-xs text-gray-400">City</p>
-        </div>
-
-        <!-- STATS -->
-        <div class="grid grid-cols-3 gap-3 mb-6 text-center">
-            <div class="bg-gray-100 p-3 rounded-lg">
-                <p class="text-xs">Needs</p>
-                <p id="ngoNeeds" class="font-bold">0</p>
+        <!-- PROFILE HEADER -->
+        <div class="flex flex-col items-center text-center">
+            <div class="relative mb-4">
+                <img id="ngoLogo" class="w-24 h-24 rounded-2xl object-cover shadow-md border-4 border-white" src="/static/images/ngologo.png" />
+                <div id="ngoStatusBadge" class="absolute -bottom-1 right-[-10px] px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm">
+                    Verified
+                </div>
             </div>
-            <div class="bg-gray-100 p-3 rounded-lg">
-                <p class="text-xs">Matches</p>
-                <p id="ngoMatches" class="font-bold">0</p>
+            <h3 id="ngoName" class="text-xl font-black text-slate-800 leading-tight">NGO Name</h3>
+            <p id="ngoEmail" class="text-sm text-slate-500 font-medium mt-1">email@ngo.com</p>
+        </div>
+
+        <!-- KEY STATS -->
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Needs</p>
+                <p id="ngoNeeds" class="text-lg font-black text-primary">0</p>
             </div>
-            <div class="bg-gray-100 p-3 rounded-lg">
-                <p class="text-xs">Joined</p>
-                <p id="ngoJoined" class="text-sm font-bold">--</p>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Matches</p>
+                <p id="ngoMatches" class="text-lg font-black text-secondary">0</p>
+            </div>
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Joined</p>
+                <p id="ngoJoined" class="text-xs font-black text-slate-600">--</p>
             </div>
         </div>
 
-        <!-- STATUS -->
-        <div class="mb-6">
-            <p class="text-xs text-gray-500">Status</p>
-            <p id="ngoStatus" class="font-semibold">--</p>
+        <!-- INFO SECTIONS -->
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">About Organization</p>
+                <p id="ngoDescription" class="text-sm text-slate-600 leading-relaxed bg-slate-50/50 p-4 rounded-xl border border-slate-100/50">
+                    No description available.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Operating City</p>
+                    <p id="ngoCity" class="text-sm font-bold text-slate-700">City</p>
+                </div>
+                <div class="space-y-1">
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Current Status</p>
+                    <p id="ngoStatus" class="text-sm font-bold text-primary">Verified</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Contact Information</p>
+                <div class="space-y-2">
+                    <div class="flex items-center gap-3 text-sm text-slate-600">
+                        <span class="material-symbols-outlined text-[18px] text-slate-400">mail</span>
+                        <span id="ngoEmail2">email@ngo.com</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-slate-600">
+                        <span class="material-symbols-outlined text-[18px] text-slate-400">call</span>
+                        <span id="ngoPhone">+91 XXXXXXXX</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-slate-600">
+                        <span class="material-symbols-outlined text-[18px] text-slate-400">language</span>
+                        <a id="ngoWebsite" href="#" target="_blank" class="text-primary hover:underline">website.com</a>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- DESCRIPTION -->
-        <div class="mb-6">
-            <p class="text-xs font-bold mb-2">Description</p>
-            <p id="ngoDescription" class="text-sm text-gray-600">
-                NGO description here...
-            </p>
-        </div>
-
-        <!-- CONTACT -->
-        <div class="mb-6">
-            <p class="text-xs font-bold mb-2">Contact Details</p>
-
-            <p id="ngoEmail2" class="text-sm">📧 email@ngo.com</p>
-            <p id="ngoPhone" class="text-sm">📞 +91 XXXXXXXX</p>
-            <p id="ngoWebsite" class="text-sm">🌐 website.com</p>
-        </div>
-
     </div>
 
-    <!-- FOOTER -->
-    <div class="p-6 border-t">
-        <button id="verifyBtn" class="w-full bg-green-600 text-white py-3 rounded-full font-bold">
-            Verify NGO Documents
-        </button>
+    <!-- FOOTER ACTIONS -->
+    <div class="p-6 bg-slate-50 border-t border-slate-200 space-y-3">
+        <div class="flex gap-3">
+            <button id="chatBtn" class="flex-1 px-4 py-3 rounded-xl bg-emerald-900 text-white text-sm font-bold flex items-center justify-center gap-2 hover:bg-emerald-800 transition-all active:scale-95">
+                <span class="material-symbols-outlined text-[18px]">chat</span> Chat
+            </button>
+            <button id="editBtn" class="px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50 transition-all active:scale-95">
+                Edit
+            </button>
+        </div>
+        
+        <div class="flex gap-3">
+            <button id="verifyBtn" class="flex-1 bg-primary text-white py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">verified_user</span>
+                Verify Documents
+            </button>
+            <button id="suspendBtn" class="px-4 py-3.5 rounded-xl border-2 border-red-100 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 transition-all active:scale-95" title="Suspend NGO">
+                <span class="material-symbols-outlined text-[20px]">block</span>
+            </button>
+        </div>
     </div>
-
 </aside>
 </main>
 

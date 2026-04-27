@@ -209,6 +209,24 @@
 
             <div class="space-y-4">
               <label class="text-xs font-bold tracking-widest text-on-surface-variant uppercase">Pin your location</label>
+
+              <!-- Search bar -->
+              <div style="position:relative;">
+                <input type="text" id="ngoLocationSearch"
+                       placeholder="Search city, area, or landmark…"
+                       class="input-field"
+                       style="padding-left:2.5rem;"
+                       autocomplete="off"/>
+                <span class="material-symbols-outlined"
+                      style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                             font-size:18px;color:#6e7a71;">search</span>
+                <!-- Autocomplete dropdown -->
+                <div id="ngoLocationSuggestions"
+                     style="display:none;position:absolute;z-index:100;top:calc(100% + 4px);left:0;right:0;
+                            background:white;border:1px solid rgba(0,108,68,.15);border-radius:12px;
+                            box-shadow:0 8px 24px rgba(0,0,0,.1);overflow:hidden;"></div>
+              </div>
+
               <div id="ngoMap" class="border border-emerald-50"></div>
               <div id="mapTag" class="text-xs font-bold text-primary flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">info</span>

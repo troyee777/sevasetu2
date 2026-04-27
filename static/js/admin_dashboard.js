@@ -233,7 +233,7 @@
      <td class="ngo-meta">${escHtml(ngo.city || ngo.location?.city || 'India')}</td>
      <td class="ngo-meta">${formatDate(ngo.createdAt)}</td>
      <td>${spill}</td>
-     <td style="text-align:right;"><button class="review-btn">Review</button></td>
+     <td style="text-align:right;"><button class="review-btn" onclick="openVerifModal()">Review</button></td>
    </tr>`;
  }
  
@@ -310,8 +310,8 @@
        <div class="verif-name">${escHtml(ngo.org_name || 'Unknown NGO')}</div>
        <div class="verif-meta">${escHtml(ngo.city || 'India')} · ${escHtml(ngo.description?.slice(0,40) || 'NGO')}…</div>
        <div class="verif-btns">
-         <button class="btn-verify" onclick="handleVerify('${escHtml(id)}', this)">Verify</button>
-         <button class="btn-reject" onclick="handleReject('${escHtml(id)}', this)">Reject</button>
+         <button class="btn-verify" onclick="handleVerify('${escHtml(id)}', this)"><span class="material-symbols-outlined" style="font-size:14px;font-variation-settings:'FILL' 1">check_circle</span> Verify</button>
+         <button class="btn-reject" onclick="handleReject('${escHtml(id)}', this)"><span class="material-symbols-outlined" style="font-size:14px;">cancel</span> Reject</button>
        </div>
      </div>
    </div>`;

@@ -152,6 +152,35 @@ def get_need_by_id(need_id):
         return None
     d = doc.to_dict()
     d["id"] = doc.id
+
+    # If assigned, fetch the match/task details for work tracking
+    vol_id = d.get("assigned_volunteer_id")
+    if vol_id:
+        match_docs = (
+            db.collection("matches")
+              .where("need_id", "==", need_id)
+              .where("volunteer_id", "==", vol_id)
+              .limit(1)
+              .stream()
+        )
+        for m_doc in match_docs:
+            m_data = m_doc.to_dict()
+            d["match_id"] = m_doc.id
+            d["work_status"] = m_data.get("work_status", "idle")
+            d["current_session_start"] = m_data.get("current_session_start")
+            d["total_work_ms"] = m_data.get("total_work_ms", 0)
+            d["volunteer_location"] = m_data.get("volunteer_location")
+            
+            # Fetch work logs/milestones
+            logs = (
+                db.collection("matches")
+                  .document(m_doc.id)
+                  .collection("work_log")
+                  .order_by("timestamp", direction=firestore.Query.DESCENDING)
+                  .stream()
+            )
+            d["work_log"] = [l.to_dict() for l in logs]
+
     return d
 
 
@@ -335,9 +364,13 @@ def save_extracted_needs_draft(ngo_id, report_id, needs):
 
         # ── Geocode the plain-text location ──────────────────────────
         if raw_location and isinstance(raw_location, str) and raw_location.strip():
+            # Get NGO city for context
+            ngo_profile = get_ngo_profile(ngo_id)
+            context_city = ngo_profile.get("location", {}).get("city") if isinstance(ngo_profile.get("location"), dict) else None
+            
             # Forward-geocode: "vidyasagapur durga mandir, kharagpur"
             #                → { city: "Kharagpur", lat: 22.368, lng: 87.249 }
-            structured_location = geocode_location_safe(raw_location)
+            structured_location = geocode_location_safe(raw_location, context=context_city)
         elif isinstance(raw_location, dict):
             # Gemini returned a dict already (shouldn't happen, but be safe)
             structured_location = raw_location
@@ -659,6 +692,60 @@ def volunteer_complete_task(match_id, vol_id, proof_url=None):
             )
 
 
+def start_work_session(match_id, vol_id):
+    """Start a work session for a task."""
+    batch = db.batch()
+    
+    match_ref = db.collection("matches").document(match_id)
+    batch.update(match_ref, {
+        "status":                "in_progress",
+        "work_status":           "working",
+        "current_session_start": firestore.SERVER_TIMESTAMP,
+        "updated_at":            firestore.SERVER_TIMESTAMP
+    })
+    
+    match_doc = match_ref.get()
+    if match_doc.exists:
+        need_id = match_doc.to_dict().get("need_id")
+        if need_id:
+            batch.update(db.collection("needs").document(need_id), {
+                "status":     "in_progress",
+                "updated_at": firestore.SERVER_TIMESTAMP
+            })
+    
+    batch.commit()
+
+
+def pause_work_session(match_id, vol_id, comment, duration_ms):
+    """Pause a work session and log the duration."""
+    # 1. Add milestone to subcollection
+    milestone = {
+        "comment":    comment,
+        "duration_ms": duration_ms,
+        "timestamp":  firestore.SERVER_TIMESTAMP,
+        "type":       "pause"
+    }
+    db.collection("matches").document(match_id).collection("work_log").add(milestone)
+    
+    # 2. Update match status
+    db.collection("matches").document(match_id).update({
+        "work_status":   "paused",
+        "total_work_ms": firestore.Increment(duration_ms),
+        "updated_at":    firestore.SERVER_TIMESTAMP
+    })
+
+
+def update_task_location(match_id, vol_id, lat, lng):
+    """Update live location of a volunteer for a specific task."""
+    db.collection("matches").document(match_id).update({
+        "volunteer_location": {
+            "lat":        lat,
+            "lng":        lng,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }
+    })
+
+
 # ══════════════════════════════════════════════
 # HAVERSINE
 # ══════════════════════════════════════════════
@@ -797,3 +884,97 @@ def get_messages_for_conversation(conversation_id, limit=50):
         messages.append(d)
     return messages
 
+
+# ══════════════════════════════════════════════
+# WORK TRACKING
+# ══════════════════════════════════════════════
+
+def start_work_session(match_id, vol_id):
+    """Marks the task as in_progress and records start time."""
+    match_ref = db.collection("matches").document(match_id)
+    match_doc = match_ref.get()
+    
+    if not match_doc.exists:
+        return False
+        
+    match_data = match_doc.to_dict()
+    if match_data.get("volunteer_id") != vol_id:
+        return False
+
+    now = datetime.now(timezone.utc)
+    
+    # Update match status and start time if not already started
+    update_data = {
+        "status": "in_progress",
+        "updated_at": firestore.SERVER_TIMESTAMP
+    }
+    
+    if not match_data.get("work_started_at"):
+        update_data["work_started_at"] = firestore.SERVER_TIMESTAMP
+    
+    # Also record this specific session start
+    match_ref.collection("work_sessions").add({
+        "start_time": firestore.SERVER_TIMESTAMP,
+        "type": "start"
+    })
+    
+    match_ref.update(update_data)
+    
+    # Update the need status as well
+    need_id = match_data.get("need_id")
+    if need_id:
+        db.collection("needs").document(need_id).update({
+            "status": "in_progress",
+            "updated_at": firestore.SERVER_TIMESTAMP
+        })
+        
+    return True
+
+def pause_work_session(match_id, vol_id, comment):
+    """Records a pause event with milestone comments."""
+    match_ref = db.collection("matches").document(match_id)
+    match_doc = match_ref.get()
+    
+    if not match_doc.exists:
+        return False
+        
+    match_data = match_doc.to_dict()
+    if match_data.get("volunteer_id") != vol_id:
+        return False
+
+    # Record the pause event
+    match_ref.collection("work_sessions").add({
+        "time": firestore.SERVER_TIMESTAMP,
+        "type": "pause",
+        "comment": comment
+    })
+    
+    # Update match with last comment
+    match_ref.update({
+        "last_milestone_comment": comment,
+        "updated_at": firestore.SERVER_TIMESTAMP
+    })
+    
+    return True
+
+def update_task_location(match_id, vol_id, lat, lng):
+    """Updates the live location of the volunteer for this task."""
+    match_ref = db.collection("matches").document(match_id)
+    match_doc = match_ref.get()
+    
+    if not match_doc.exists:
+        return False
+        
+    match_data = match_doc.to_dict()
+    if match_data.get("volunteer_id") != vol_id:
+        return False
+
+    match_ref.update({
+        "live_location": {
+            "lat": lat,
+            "lng": lng,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }
+    })
+    
+    return True
